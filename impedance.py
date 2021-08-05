@@ -12,13 +12,17 @@ def get_inside(img):
     # Threshold to get the white stuff
     imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     #plt.imshow(imgray)
+
+    # Binarizar
+    # Blanco queda blanco, todo lodemas negro
     ret, thresh = cv2.threshold(imgray, 250, 255, cv2.THRESH_BINARY)
     #cv2.imshow('',thresh)
 
 
     #plt.show()
+    # Extraigo contornos
     contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
+    # El blanco sera el contorno mas grande
     output = img
     if len(contours) != 0:
         # draw in blue the contours that were founded
@@ -60,12 +64,13 @@ for image in listOfFiles:
     name,ext=os.path.splitext(image)
     folder = os.path.join('.rois',name+'_'+ext)
     img = cv2.imread(os.path.join('images',image))
-
+    # Nos quedamos con el contorno blanco y lo que este adentro
     _,img = get_inside(img) # keep the cropped
+    
     original = img.copy()
     # cv2.imshow('s',img)
     # cv2.waitKey()
-
+    # negro falta
     z_colors = [(255,0,255),
     (128,0,128),
     (0,0,255)  ,
@@ -111,6 +116,7 @@ for image in listOfFiles:
         idx = np.argmin(dists)
         return z_values[idx],np.min(dists)
 
+    # Segmentacion
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # cv2.imshow('s',gray)
     # cv2.waitKey()
@@ -127,6 +133,7 @@ for image in listOfFiles:
     # cv2.imshow('s',canny)
     # cv2.waitKey()
     kernel = np.ones((5,5),np.uint8)
+    # quitar letras internas
     dilate = canny.copy()#cv2.dilate(canny, kernel, iterations=2)
     #set(dilate.flatten().tolist())
     #dilate[np.where(dilate == 255)] = [0]
@@ -134,7 +141,7 @@ for image in listOfFiles:
     #cv2.imshow('s',dilate)
     #cv2.waitKey()
 
-    # Find contours
+    # Find external contours (no importa el dilate??)
     #cnts = cv2.findContours(dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cnts = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
@@ -146,6 +153,7 @@ for image in listOfFiles:
     # Iterate thorugh contours and filter for ROI
     img_number = 0
     contour_sizes = [cv2.contourArea(contour) for contour in cnts]
+    # calcular areas para identificar regiones outlier
     contour_areas =[]
     for c in cnts:
         _,_,w,h =cv2.boundingRect(c)
@@ -154,7 +162,7 @@ for image in listOfFiles:
     #plt.boxplot(contour_sizes)
     # show plot
     #plt.show()
-
+    # Discriminar solo electrodos
     def foo(area,low=700,high=3000):
         if area > low and area < high:
             return True
@@ -176,13 +184,15 @@ for image in listOfFiles:
         x,y,w,h = cv2.boundingRect(c)
         cv2.rectangle(img, (x, y), (x + w, y + h), (36,255,12), 1)
         ROI = dilate[y:y+h, x:x+w]
+        # para quedarnos con el color y no con la letra
         dilate2 = cv2.dilate(ROI, kernel, iterations=2)
-
+        cv2.imshow('s',dilate2)
         # cnts2,_ = cv2.findContours(ROI, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         # # maybe i cant discriminate by color/contour because they may have the same color
         # if len(cnts2):
         #     cnts3 = cv2.findContours(ROI, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # Mascara del contorno a la imagen con colores
         ROI = original[y:y+h, x:x+w]
 
         # discrimination by color does not work, they may have the same color
