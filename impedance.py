@@ -24,9 +24,6 @@ from copy import deepcopy           # Para hacer copias reales de variables
 #-------------Variables de entrada-----------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
 
-PLOT = False                        # Para controlar si queremos visualizar el procesamiento
-                                    # durante el run-time
-
 INPUT_DIR = 'images'                # Directorio donde se encuentran las imagenes originales
                                     # que se van a procesar.
 OUTPUT_DIR = '.rois'                # Directorio donde se va a guardar el resultado de procesamiento
