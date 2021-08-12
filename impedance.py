@@ -74,6 +74,73 @@ Z_VALUES = [50*K  ,                 # Lista de impedancias, en el mismo orden qu
 8.2*K ,
 5*K   ]
 
+def get_dist(a,b):
+    """Calcular distancia euclidiana entre dos tuplas con numeros.
+
+    Util para por ejemplo calcular la distancia entre dos colores.
+    Tanto a como b deben tener la misma cantidad de elementos (dimensiones).
+    Y ademas las dimensiones deben estar organizadas en el mismo orden.
+
+    Parameters
+    ----------
+    a : tupla numerica 1
+    b : tupla numerica de referencia (la que resta)
+
+    Returns
+    -------
+    float :
+        La distancia euclidiana de `a` respecto a `b`
+    """
+    ds = []                             # Lista para guardar distancias de cada dimension
+    for i,_ in enumerate(a):            # Recorremos a traves de las dimensiones
+        ds.append( (a[i]-b[i])**2)      # Distancia componente a componente
+
+    # Ya obtenidas las distancias componente a componente
+    # Retornamos la raiz cuadradas de sus sumas
+    return np.sqrt(np.sum(ds))          
+
+def z_mapping(bgr,Z_COLORS,Z_VALUES):
+    """Mapear un color BGR a una impedancia.
+
+    Esta funcion mapea un color BGR a una impedancia siguiendo un mapeo
+    dado por dos listas organizadas que contienen la informacion de la
+    escala de colores vs impedancia: 
+        Z_COLORS (colores esperados)
+        Z_VALUES (impendancias de los colores esperados)
+    
+    El mapeo del color entrante bgr se logra buscando el color mas cercano a este en Z_COLORS.
+
+    Parameters
+    ----------
+    bgr : tuple
+        Tupla numerica de 3 dimensiones que contiene un color BGR en ese orden.
+        Este color es el que intentaremos mapear a una impedancia.
+    Z_COLORS : list[tuple]
+        Lista de colores esperados (tuplas BGR) dada la escala de colores vs impendancias
+    Z_VALUES : list[float]
+        Lista de impedancias (flotantes) dada la escala de colores vs impendancias
+
+    Returns
+    -------
+    tuple:
+        (
+            float: impedancia,
+            float: distancia al color mas cercano en la escala
+        )
+
+    """
+    # Calculamos la distancia del color entrante a cada uno de los colores de la escala dada
+    dists = [get_dist(bgr,o) for o in Z_COLORS]
+
+    # Notemos que `dists` tiene el mismo orden que `Z_COLORS` y `Z_VALUES` 
+    # Encontramos el indice de la minima distancia a algun color de la escala
+    idx = np.argmin(dists)
+
+    impedancia = Z_VALUES[idx]  # Asignamos la impedancia del color mas cercano de la escala al color entrante
+    distancia = dists[idx]      # Guardamos tambien la distancia entre el color entrante y el color de la escala escogido
+                                # Esto ultimo para debugging
+    return impedancia,distancia
+
 
 def plot_fun(x,title='untitled',func_sig='',plot=False,waitkey=False):
     """Procedimiento auxiliar para graficar y esperar
@@ -212,17 +279,6 @@ for image in listOfFiles:
     cv2.waitKey()
     # negro falta
 
-    def get_dist(a,o):
-        ds = []
-        for i,_ in enumerate(a):
-            ds.append( (a[i]-o[i])**2)
-        
-        return np.sqrt(np.sum(ds))
-
-    def z_mapping(bgr,Z_COLORS,Z_VALUES,radii=0):
-        dists = [get_dist(bgr,o) for o in Z_COLORS]
-        idx = np.argmin(dists)
-        return Z_VALUES[idx],np.min(dists)
 
     # Segmentacion
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
