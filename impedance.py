@@ -17,6 +17,8 @@ import cv2                          # Para el procesamiento de Imagenes
 import numpy as np                  # Para manejo de matricesS
 import os                           # Para la manipulacion del sistema de archivos
 import shutil                       # Para la manipulacion del sistema de archivos
+import pandas as pd                 # Para crear la tabla final de electrodos
+from copy import deepcopy           # Para hacer copias reales de variables
 
 #--------------------------------------------------------------------------------------------------
 #-------------Variables de entrada-----------------------------------------------------------------
@@ -44,8 +46,8 @@ OUTPUT_DIR = '.rois'                # Directorio donde se va a guardar el result
 Z_COLORS = [(255,0,255),            # Esta lista contiene n-tuplas de 3 posiciones.  
 (128,0,128),                        # Cada una representando un color en formato RGB,
 (0,0,255)  ,                        # es decir: (R,G,B)                              
-(0,0,192)  ,                        
-(0,0,128)  ,                        
+(0,0,192)  ,                        # TODO: Falta colocar el negro, que no esta en la escala
+(0,0,128)  ,                        # pero si se usa
 (0,128,192),                        
 (0,192,192),
 (0,255,0)  ,
@@ -62,8 +64,8 @@ Z_VALUES = [50*K  ,                 # Lista de impedancias, en el mismo orden qu
 46.8*K,                             # De tal forma que al indexar ambas en un mismo sub-indice
 43.6*K,                             # se obtienen el color y la impedancia correspondiente y 
 40.4*K,                             # ligados entre si.
-37.1*K,
-33.9*K,
+37.1*K,                              
+33.9*K,                             
 30.7*K,
 27.5*K,
 24.3*K,
@@ -138,11 +140,12 @@ def z_mapping(bgr,Z_COLORS,Z_VALUES):
 
     impedancia = Z_VALUES[idx]  # Asignamos la impedancia del color mas cercano de la escala al color entrante
     distancia = dists[idx]      # Guardamos tambien la distancia entre el color entrante y el color de la escala escogido
-                                # Esto ultimo para debugging
-    return impedancia,distancia
+                                # La distancia nos sirve como una metrica de error de mapeo
+                                # Lo deseado es que sea de 0
+    return impedancia,distancia # Retorno
 
 
-def plot_fun(x,title='untitled',func_sig='',plot=False,waitkey=False):
+def plot_fun(x,title='untitled',func_sig='',plot=True,waitkey=True):
     """Procedimiento auxiliar para graficar y esperar
     la entrada del usuario si es requerido.
     x : np.ndarray
@@ -208,7 +211,8 @@ def remover_exterior(img,plot=False,waitkey=False):
     plot_fun(img,title,func_signature,plot,waitkey)                 # Graficacion si es solicitada
     all_images.append(np.copy(img))                                 # Añadir imagen al historial
     all_titles.append(title)                                        # Añadir metadatos
-
+                                                                    # TODO: Este seccion de codigo (title a append) es repetitivo
+                                                                    # Se puede colocar en una sola funcion
     # Objetivo: Extraer contornos de aquello que es blanco,
     # es decir, el fondo del interior de la imagen.
 
@@ -265,133 +269,181 @@ def remover_exterior(img,plot=False,waitkey=False):
     assert len(all_images) == len(all_titles),'Error, el tamaño del historial no corresponde con la lista de imagenes'
     return all_images,all_titles                                              # Retornamos imagenes y el historial
 
-def process_single_image(filename,input_dir,output_dir):
-    name,ext=os.path.splitext(filename)
-    folder = os.path.join(output_dir,name+'_'+ext)
-    img = cv2.imread(os.path.join(input_dir,filename))
-    # Nos quedamos con el contorno blanco y lo que este adentro
-    imagenes_remocion,historial_remocion = remover_exterior(img) # keep the cropped
-    #plot_fun(imagenes_remocion[-1],historial_remocion[-1],'out',True,True)
-    img = imagenes_remocion[-1]
-    original = img.copy()
-    #cv2.imshow('s',img)
-    #cv2.waitKey()
-    # negro falta
 
+def is_electrode(area,low=700,high=3000):
+    """Determina si un area corresponde a un electrodo dado unos umbrales.
+
+    Parameters
+    ----------
+    area : numeric
+        Area que se quiere clasificar
+    low : minima area aceptable para ser electrodo, exclusivo
+    high : maxima area aceptable para ser electrodo, exclusivo
+
+    Returns
+    -------
+    bool :
+        True si es electrodo (cumple con los umbrales)
+        False en otro caso.
+    """
+    if area > low and area < high:          # Area dentro del intervalo dado por los umbrales
+        return True                         # Si cumple intervalo, es electrodo
+    else:                                   # De lo contrario...
+        return False                        # NO.
+
+def get_electrodes(filename,input_dir,output_dir,plot=False,waitkey=False):
+    """Procesar una sola imagen con nombre `filename`, dentro de `input_dir` y guardarla los resultados en `output_dir`.
+
+    Parameters
+    ----------
+    filename : str
+        Nombre de la imagen dentro de la carpeta `input_dir`
+    input_dir : str
+        Path de la carpeta donde se encuentra la imagen de nombre `filename`
+    output_dir : str
+        Path de la carpeta raiz donde se quieren guardar los resultados con el siguiente formato:
+        output_dir/filename/roi-{}-{}_z-{}_dist-{}.png
+    plot: bool
+        Indica si graficar o no la imagen a medida que es procesada.
+    waitkey: bool
+        Indica si esperar entrada del usuario para seguir con el algoritmo luego
+        de graficar una imagen.
+        Ignorado si plot es False.
+
+
+    Returns
+    -------
+    list[tuple]:
+        lista con tuplas de 4 posiciones:
+            (array del electrodo,label del electrodo,impedancia,error de mapeo a impedancia)
+    """
+    #TODO: Agregar monitoreo (graficas) e historial a la funcion tal como se hizo con remover_exterior
+    name,ext=os.path.splitext(filename)                                 # Obtenemos nombre y extension del archivo de la imagen
+    output_folder = os.path.join(output_dir,name+ext)                   # Carpeta de salida donde guardaremos resultados 
+    os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
+    img_raw = cv2.imread(os.path.join(input_dir,filename))              # Lectura de la imagen entrante
+
+    # Remocion de las ventanas exteriores
+    imagenes_remocion,historial_remocion = remover_exterior(img_raw)    # Removemos el "exterior" de la imagen
+    img = imagenes_remocion[-1]                                         # Nos quedamos con la imagen recortada a solo la parte interna
+    cropped_img = img.copy()                                            # Hacemos una copia inalterada en memoria
 
     # Segmentacion
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    # cv2.imshow('s',gray)
-    # cv2.waitKey()
 
-    blurred = gray.copy()
-    # blurred = cv2.GaussianBlur(gray, (3, 3), 0)
-    # blurred = cv2.GaussianBlur(blurred, (3, 3), 0)
-    # blurred = cv2.GaussianBlur(blurred, (3, 3), 0)
+    # Primero detectamos bordes mediante Canny
+    # Porque antes de Canny no suavizamos? 
+    # Porque la imagen al ser una captura de pantalla viene con muy poco ruido
+    # Entonces el suavizado no hace mayor efecto sobre el resultado de canny
+    canny = cv2.Canny(img, 200, 255, 1)                                 # Detectamos bordes mediante canny
 
-    # cv2.imshow('s',blurred)
-    # cv2.waitKey()
+    # Encontramos los contornos EXTERNOS
+    # Esto ya que lo que nos interesa separar electrodos
+    # Por el momento no nos interesa las letras ni nada
+    # Porque no dilatamos antes?
+    # Porque los bordes externos estan muy bien definidos (es una captura de pantalla)
+    # La dilatacion no nos da una ventaja
+    cnts = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-    canny = cv2.Canny(blurred, 200, 255, 1)
-    # cv2.imshow('s',canny)
-    # cv2.waitKey()
-    kernel = np.ones((5,5),np.uint8)
-    # quitar letras internas
-    dilate = canny.copy()#cv2.dilate(canny, kernel, iterations=2)
-    #set(dilate.flatten().tolist())
-    #dilate[np.where(dilate == 255)] = [0]
-    #im[np.all(im == (0, 255, 0), axis=-1)] = (255,255,255)
-    #cv2.imshow('s',dilate)
-    #cv2.waitKey()
-
-    # Find external contours (no importa el dilate??)
-    #cnts = cv2.findContours(dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-
-    #cnts = cv2.findContours(dilate, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # findContours va a retornar 2 o 3 argumentos
+    # Este if nos permite quedarnos con los contornos
+    # Independientemente de la version
     cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 
-    os.makedirs(folder,exist_ok=True)
 
-    # Iterate thorugh contours and filter for ROI
-    img_number = 0
-    contour_sizes = [cv2.contourArea(contour) for contour in cnts]
-    # calcular areas para identificar regiones outlier
-    contour_areas =[]
-    for c in cnts:
-        _,_,w,h =cv2.boundingRect(c)
-        contour_areas.append(w*h)
+    # Ahora necesitamos discriminar los contornos que son electrodos de los que no
+    # Esto lo haremos debido a que el area de un electrodo es practicamente igual siempre
 
-    #plt.boxplot(contour_sizes)
-    # show plot
-    #plt.show()
-    # Discriminar solo electrodos
-    def foo(area,low=700,high=3000):
-        if area > low and area < high:
-            return True
-        else:
-            return False
+    # Calculamos areas de los contornos
+    contour_areas =[]                   # Lista para las areas
+    for c in cnts:                      # Iteramos sobre los contornos
+        _,_,w,h =cv2.boundingRect(c)    # Obtenemos el rectangulo limitrofe
+        contour_areas.append(w*h)       # Calculamos el area como basexaltura
 
-    cnts = [c  for i,c in enumerate(cnts) if foo(contour_areas[i]) ]
+    # Con base en las areas halladas ahora nos quedamos con aquellas que sean de electrodos
+    # Usaremos la funcion is_electrode para discriminar electrodos a partir de areas
+    electrodes_cnts = [c  for i,c in enumerate(cnts) if is_electrode(contour_areas[i]) ]                # Lista nueva solo con los contornos de electrodos
+    electrodes_areas = [contour_areas[i]  for i,c in enumerate(cnts) if is_electrode(contour_areas[i])] # Lista nueva solo con areas de electrodos
+    contour_areas = deepcopy(electrodes_areas)                                                          # Reemplazamos la variable original con la version de solo electrodos
+    cnts = deepcopy(electrodes_cnts)                                                                    # Reemplazamos la variable original con la version de solo electrodos
 
-    contour_sizes = [cv2.contourArea(contour) for contour in cnts]
-    contour_areas =[]
-    for c in cnts:
-        _,_,w,h =cv2.boundingRect(c)
-        contour_areas.append(w*h)
+    # Ya con solo los contornos que corresponden a electrodos solo nos falta
+    # solo nos falta recortar los electrodos, mapearlos a una impedancia
+    # y guardarlos/retornarlos
 
+    electrodes = []                                                     # Simplemente una lista para ir guardando los electrodos recortados
+    for c,cnt in enumerate(cnts):                                       # Iteramos sobre los contornos (que ya deben correspoder solo a electrodos)
+        x,y,w,h = cv2.boundingRect(cnt)                                 # Encontramos el rectangulo limitrofe del electrodo correspondiente
+        ROI = cropped_img[y:y+h, x:x+w]                                 # Recortamos la imagen original a solo los limites actuales
 
-    insides =[]
-    radii = 10
-    for i,c in enumerate(cnts):
-        x,y,w,h = cv2.boundingRect(c)
-        cv2.rectangle(img, (x, y), (x + w, y + h), (36,255,12), 1)
-        ROI = dilate[y:y+h, x:x+w]
-        # para quedarnos con el color y no con la letra
-        dilate2 = cv2.dilate(ROI, kernel, iterations=2)
-        # cv2.imshow('s',dilate2)
-        # cv2.waitKey()
-        # cnts2,_ = cv2.findContours(ROI, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # Debemos manejar el caso de los electrodos outlier (los que estan pegados en la imagen)
+        # F5 y FC5
+        # La estrategia ya bien sea un contorno normal o el outlier
+        # sera colocar en una lista los electrodos hallados en el contorno
+        # Y luego iterar sobre ellos para guardarlos
 
-        # # maybe i cant discriminate by color/contour because they may have the same color
-        # if len(cnts2):
-        #     cnts3 = cv2.findContours(ROI, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # Mascara del contorno a la imagen con colores
-        ROI = original[y:y+h, x:x+w]
+        # Discriminamos si estamos en el caso outlier
+        if contour_areas[c] > 1500:                                     # Podemos discriminar este caso ya que este contorno va a tener un
+                                                                        # area mayor al de 1 solo electrodo
+            # Lo que haremos es picar el contorno en dos
+            # En el eje `y` picamos aproximadamente por la mitad
+            # En el eje `x` hay un corrimiento entre ambos electrodos
+            # por lo que toca agregar ese corrimiento para obtener un buen corte
+            # Por ahora los parametros de estos recortes estan puestos a ojo/mano
+            # tratando de seguir una proporcionalidad con las dimensiones w,h del contorno
+            # quizas haya una manera mas elegante
+            ROI1 = cropped_img[y:y+h//2, x+int(np.floor(w*0.25)):x+w]   # Recortamos electrodo superior
+            ROI2 = cropped_img[y+h//2:y+h, x:x+int(np.floor(w*0.75))]   # Recortamos electrodo inferior
+            ROIS = [ROI1,ROI2]                                          # Colocamos ambos en una lista
 
-        # discrimination by color does not work, they may have the same color
-        #colors = np.unique(ROI.copy().reshape(-1, ROI.shape[-1]), axis=0, return_counts=False).shape[0]
-        #insides.append((len(cnts2),colors))
-        
+        else:                                                           # Este seria el caso de un solo electrodo
+            ROIS = [ROI]                                                # Agregamos un solo electrodo a la lista
 
-        #discriminate by size and split in the y middle
-        if contour_areas[i] > 1500:
-            ROI1 = original[y:y+h//2, x+int(np.floor(w*0.25)):x+w]
-            ROI2 = original[y+h//2:y+h, x:x+int(np.floor(w*0.75))]
-            ROIS = [ROI1,ROI2]
-            #insides.append((len(cnts2),colors))
-        else:
-            ROIS = [ROI]
-        chars =[]
-        for j,r in enumerate(ROIS):
-            colors,counts = np.unique(r.copy().reshape(-1, r.shape[-1]), axis=0, return_counts=True)
-            index=np.argmax(counts)
-            color = colors[index]
-            z,mindist = z_mapping(color,Z_COLORS,Z_VALUES)
-            insides.append((i,j,z,mindist))
-            cv2.imwrite(os.path.join(folder,"ROI_{}_{}__{}_{}.png".format(i,j,z,mindist)), r)
+        # Ya manejado tanto el caso normal como el outlier
+        # Simplemente iteramos para mapear/guardar/retornar los electrodos
+        for e,electrode in enumerate(ROIS):
 
-    #cv2.imshow('canny', canny)
-    #cv2.imshow('img', img)
-    #cv2.waitKey(0)
+            # Para mapear vemos el color mas comun del electrodo
+            # Este sera el color que compararemos con la escala colores vs impedancia
+            # para asi con este color "moda" mapear el electrodo a una impedancia
+            colors,counts = np.unique(electrode.copy().reshape(-1, electrode.shape[-1]), axis=0, return_counts=True)            # Obtenemos los colores presentes en el electrodo asi como el conteo de cada uno
+            index=np.argmax(counts)                                                                                             # Encontramos el indice del color mas frecuente
+            color = colors[index]                                                                                               # A partir del indice obtenemos el color
+            z,dist = z_mapping(color,Z_COLORS,Z_VALUES)                                                                         # Con la funcion z_mapping mapeamos el color a una impedancia
+                                                                                                                                # TODO: Obtener escala a partir de la imagen mediante una funcion
+            label = get_label(electrode)                                                                                        # Obtenemos el label, esta funcion aun no esta implementada
+            electrodes.append((electrode,label,z,dist))                                                                         # Agregamos el electrodo,impedancia,distancia actual a la lista de electrodos
+                                                                                                                                # La distancia nos sirve como una metrica de error de mapeo, por eso la guardamos
+            cv2.imwrite(os.path.join(output_folder,"label-{}_roi-{}-{}_z-{}_dist-{}.png".format(c,e,label,z,dist)), electrode)  # Guardamos el electrodo en la carpeta de salida
+    return electrodes
 
+def get_label(electrode):
+    """Retorna el label de un electrodo.
 
+    Funcion aun no implementada pero si planificada.
 
-if __name__ == '__main__':
+    Parameters
+    ----------
+    electrode : arreglo de la imagen recortada del electrodo
+
+    Returns
+    -------
+    None (por ahora)
+    """
+    return None
+if __name__ == '__main__':                                  # Funcionamiento del programa sobre una carpeta
     listOfFiles = [f for f in os.listdir(INPUT_DIR)]
     if os.path.isdir(OUTPUT_DIR):
         shutil.rmtree(OUTPUT_DIR)
 
 
     for image in listOfFiles:
-        process_single_image(image,INPUT_DIR,OUTPUT_DIR)
+        electrodes = get_electrodes(image,INPUT_DIR,OUTPUT_DIR)             # Obtenemos lista de electrodos de la imagen
+        output_folder = os.path.join(OUTPUT_DIR,image)                      # Carpeta de salida donde guardaremos resultados 
+        os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
+        no_images = [x[1:] for x in electrodes]                             # Lista sin las imagenes de los electrodos (para guardar la tabla)
+        df = pd.DataFrame(no_images,columns=['label','z','error'])          # Creamos Tabla
+        tablepath = os.path.join(output_folder,'electrodes')                # Directorio de la tabla
+        df.to_html(tablepath+'.html')                                       # Guardamos tabla html de electrodos
+        df.to_csv(tablepath+'.csv')                                         # Guardamos tabla csv de electrodos
+
+    print('END')
