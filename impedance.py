@@ -260,23 +260,22 @@ def remover_exterior(img,plot=False,waitkey=False):
     all_images.append(np.copy(cropped_image))                                 # Añadir imagen al historial
     all_titles.append(title)                                                  # Añadir metadatos
 
+    # Para verificar el correcto funcionamiento del algoritmo
+    # vemos que el historial y las imagenes guardadas tengan la misma cantidad de elementos
     assert len(all_images) == len(all_titles),'Error, el tamaño del historial no corresponde con la lista de imagenes'
-    return all_images,all_titles
+    return all_images,all_titles                                              # Retornamos imagenes y el historial
 
-listOfFiles = [f for f in os.listdir(INPUT_DIR)]
-if os.path.isdir(OUTPUT_DIR):
-    shutil.rmtree(OUTPUT_DIR)
-
-for image in listOfFiles:
-    name,ext=os.path.splitext(image)
-    folder = os.path.join('.rois',name+'_'+ext)
-    img = cv2.imread(os.path.join(INPUT_DIR,image))
+def process_single_image(filename,input_dir,output_dir):
+    name,ext=os.path.splitext(filename)
+    folder = os.path.join(output_dir,name+'_'+ext)
+    img = cv2.imread(os.path.join(input_dir,filename))
     # Nos quedamos con el contorno blanco y lo que este adentro
     imagenes_remocion,historial_remocion = remover_exterior(img) # keep the cropped
-    plot_fun(imagenes_remocion[-1],historial_remocion[-1],'out',True,True)
+    #plot_fun(imagenes_remocion[-1],historial_remocion[-1],'out',True,True)
+    img = imagenes_remocion[-1]
     original = img.copy()
-    cv2.imshow('s',img)
-    cv2.waitKey()
+    #cv2.imshow('s',img)
+    #cv2.waitKey()
     # negro falta
 
 
@@ -350,7 +349,8 @@ for image in listOfFiles:
         ROI = dilate[y:y+h, x:x+w]
         # para quedarnos con el color y no con la letra
         dilate2 = cv2.dilate(ROI, kernel, iterations=2)
-        cv2.imshow('s',dilate2)
+        # cv2.imshow('s',dilate2)
+        # cv2.waitKey()
         # cnts2,_ = cv2.findContours(ROI, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         # # maybe i cant discriminate by color/contour because they may have the same color
@@ -384,3 +384,14 @@ for image in listOfFiles:
     #cv2.imshow('canny', canny)
     #cv2.imshow('img', img)
     #cv2.waitKey(0)
+
+
+
+if __name__ == '__main__':
+    listOfFiles = [f for f in os.listdir(INPUT_DIR)]
+    if os.path.isdir(OUTPUT_DIR):
+        shutil.rmtree(OUTPUT_DIR)
+
+
+    for image in listOfFiles:
+        process_single_image(image,INPUT_DIR,OUTPUT_DIR)
