@@ -1,6 +1,6 @@
 # mine
 
-images/
+.images_source/
 .rois/
 
 # Byte-compiled / optimized / DLL files
