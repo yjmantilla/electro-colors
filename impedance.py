@@ -41,8 +41,8 @@ OUTPUT_DIR = '.rois'                # Directorio donde se va a guardar el result
 # se mantiene como un parametro constante en la ejecucion.
 
 Z_COLORS = [(255,0,255),            # Esta lista contiene n-tuplas de 3 posiciones.  
-(128,0,128),                        # Cada una representando un color en formato RGB,
-(0,0,255)  ,                        # es decir: (R,G,B)                              
+(128,0,128),                        # Cada una representando un color en formato BGR,
+(0,0,255)  ,                        # es decir: (B,G,R)                              
 (0,0,192)  ,                        # TODO: Falta colocar el negro, que no esta en la escala
 (0,0,128)  ,                        # pero si se usa
 (0,128,192),                        
