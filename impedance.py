@@ -431,9 +431,9 @@ def get_label(electrode):
     """
     return None
 if __name__ == '__main__':                                  # Funcionamiento del programa sobre una carpeta
-    listOfFiles = [f for f in os.listdir(INPUT_DIR)]
-    if os.path.isdir(OUTPUT_DIR):
-        shutil.rmtree(OUTPUT_DIR)
+    listOfFiles = [f for f in os.listdir(INPUT_DIR)]        # Lista de archivos a procesar
+    if os.path.isdir(OUTPUT_DIR):                           # Revisar si el directorio de salida ya existe
+        shutil.rmtree(OUTPUT_DIR)                           # Limpiarlo en ese caso
 
 
     for image in listOfFiles:
