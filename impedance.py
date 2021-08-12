@@ -116,10 +116,18 @@ def remover_exterior(img,plot=False,waitkey=False):
         Ignorado si plot es False.
     Returns
     -------
-    list:
-        [imagen original
-        imagen original con negro en lo removido,
-        imagen recortada]
+    tupla con dos listas:
+        lista 1: 
+            Imagenes en cada fase del proceso.
+        lista 2: 
+            Label de cada imagen de la lista 1
+            ['Imagen Entrante',
+            'Imagen Escala de Grises',
+            'Imagen Binarizada',
+            'Contornos Exteriores',
+            'Contorno Maximo: Area Blanca']
+    
+    El resultado final del proceso estara en la ultima posicion del arreglo ([-1])
     """
 
     func_signature = 'RemoverExterior:'     # Firma de la funcion para identificar 
@@ -139,7 +147,7 @@ def remover_exterior(img,plot=False,waitkey=False):
 
     imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)                             # Convertimos a escala de grises 
                                                                                # para facilitar la discriminacion del blanco entre lo demas
-    title = 'Imagen Escala de Grises'
+    title = 'Imagen Escala de Grises'                                          # Solo una variable para guardar metadatos del historial
     plot_fun(imgray,title,func_signature,plot,waitkey)                         # Graficacion si es solicitada
     all_images.append(np.copy(imgray))                                         # Añadir imagen al historial
     all_titles.append(title)                                                   # Añadir metadatos
@@ -149,7 +157,7 @@ def remover_exterior(img,plot=False,waitkey=False):
     bin_high = 255                                                              # Ya que el blanco que buscamos es practicamente puro
     ret, thresh = cv2.threshold(imgray, bin_low, bin_high, cv2.THRESH_BINARY)   # La binarizacion en si.
 
-    title = 'Imagen Binarizada'
+    title = 'Imagen Binarizada'                                                 # Solo una variable para guardar metadatos del historial
     plot_fun(thresh,title,func_signature,plot,waitkey)                          # Graficacion si es solicitada
     all_images.append(np.copy(thresh))                                          # Añadir imagen al historial
     all_titles.append(title)                                                    # Añadir metadatos
@@ -163,34 +171,30 @@ def remover_exterior(img,plot=False,waitkey=False):
 
     assert len(contours) != 0,'No se pudieron encontrar contornos.'           # Aseguramos que se haya podido algun contorno
                                                                               # De lo contrario damos error
-    # draw in blue the contours that were founded
-    #cv2.drawContours(output, contours, -1, 255, 3)
 
-    # find the biggest countour (c) by the area
-    c = max(contours, key = cv2.contourArea)
-    x,y,w,h = cv2.boundingRect(c)
-    cropped_image = img[y:y+h, x:x+w]
-    contour_sizes = [cv2.contourArea(contour) for contour in contours]
-    biggest_contour = max(contour_sizes)
-    # draw the biggest contour (c) in green
-    #cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),2)
+    # Coloreamos en azul los contornos encontrados para monitorear el algoritmo
+    imgcontours  = cv2.drawContours(np.copy(img), contours, -1, 255, 3)       # Coloreamos Contornos
+    title = 'Contornos Exteriores'                                            # Solo una variable para guardar metadatos del historial
+    plot_fun(imgcontours,title,func_signature,plot,waitkey)                   # Graficacion si es solicitada
+    all_images.append(np.copy(imgcontours))                                   # Añadir imagen al historial
+    all_titles.append(title)                                                  # Añadir metadatos
 
-    # cv2.imshow("Result", np.hstack([img, output]))
+    # El contorno mas grande sera el contorno exterior blanco
+    # Nuestro objetivo es identificarlo entre todos los contornos
+    max_contour = max(contours, key = cv2.contourArea)                        # Encontramos el area del contorno mas grande
+                                                                              # cv2.contourArea es la funcion que calcula el area de un contorno
+                                                                              # para luego comparar todas las areas y encontrar la mas grande
+    x,y,w,h = cv2.boundingRect(max_contour)                                   # Determinamos el rectangulo limitrofe del contorno
 
-    # cnt = contours[0]
-    # cv2.drawContours(img, [cnt], 0, (0,255,0), 3)
-    idx = contour_sizes.index(biggest_contour)
-    # The index of the contour that surrounds your object
-    mask = np.zeros_like(imgray) # Create mask where white is what we want, black otherwise
-    cv2.drawContours(mask, contours, idx, 255, -1) # Draw filled contour in mask
+    # Recortamos el contorno mas grande, siendo este el resultado final de la funcion
+    cropped_image = img[y:y+h, x:x+w]                                         # Recortamos la imagen dado el rectangulo limitrofe
+    title = 'Contorno Maximo: Area Blanca'                                    # Solo una variable para guardar metadatos del historial
+    plot_fun(cropped_image,title,func_signature,plot,waitkey)                 # Graficacion si es solicitada
+    all_images.append(np.copy(cropped_image))                                 # Añadir imagen al historial
+    all_titles.append(title)                                                  # Añadir metadatos
 
-    
-    #cv2.imshow("Input img", mask)
-    out = np.zeros_like(img) # Extract out the object and place into output imgs
-    out[mask == 255] = img[mask == 255]
-    #cv2.imshow("Input img", out)
-    #cv2.waitKey()
-    return out,cropped_image
+    assert len(all_images) == len(all_titles),'Error, el tamaño del historial no corresponde con la lista de imagenes'
+    return all_images,all_titles
 
 listOfFiles = [f for f in os.listdir(INPUT_DIR)]
 if os.path.isdir(OUTPUT_DIR):
@@ -201,8 +205,8 @@ for image in listOfFiles:
     folder = os.path.join('.rois',name+'_'+ext)
     img = cv2.imread(os.path.join(INPUT_DIR,image))
     # Nos quedamos con el contorno blanco y lo que este adentro
-    _,img = remover_exterior(img) # keep the cropped
-    
+    imagenes_remocion,historial_remocion = remover_exterior(img) # keep the cropped
+    plot_fun(imagenes_remocion[-1],historial_remocion[-1],'out',True,True)
     original = img.copy()
     cv2.imshow('s',img)
     cv2.waitKey()
