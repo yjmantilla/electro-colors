@@ -48,8 +48,8 @@ LABELS = ['O1','O2','OZ','PO8','PO7','PO5','PO6','PO4','PO3','POZ','P8','P7','P6
 Z_COLORS = [(255,0,255),            # Esta lista contiene n-tuplas de 3 posiciones.  
 (128,0,128),                        # Cada una representando un color en formato BGR,
 (0,0,255)  ,                        # es decir: (B,G,R)                              
-(0,0,192)  ,                        # TODO: Falta colocar el negro, que no esta en la escala
-(0,0,128)  ,                        # pero si se usa
+(0,0,192)  ,                        
+(0,0,128)  ,                        
 (0,128,192),                        
 (0,192,192),
 (0,255,0)  ,
@@ -489,6 +489,46 @@ def get_label(electrode,reference_electrodes):
     idx =np.argmax(corrs)
     labels = [e[1] for e in reference_electrodes]
     return labels[idx],corrs[idx]
+
+def label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES):
+    """Asociar labels a una lista de electrodos sin estos que conforman el ejemplo para hacer correlacion.
+
+    Parameters
+    ----------
+    unlabeled_electrodes : list[list]
+    Lista de listas. Cada lista en un electrodos dado por [arreglo_electrodo,label,impedancia,error de mapeo]
+    o [arreglo_electrodo,label]
+
+    Es la lista obtenida de get_electrodes sobre el archivo de ejemplo.
+
+    LABELS: list[str]
+    Lista con los labels de los electrodos organizados en el mismo orden que unlabeled_electrodes
+
+    OUTPUT_DIR: str
+    Carpeta de salida para guardar el ejemplo que se utilizo.
+
+    SAVE_IMAGES: bool
+    Para decidir si guardar las imagenes de los electrodos con los labels asociados.
+
+    Returns
+    -------
+    (labeled_electrodes,labeled_example_path)
+
+    labeled_electrodes: list[lists]
+    La lista de electrodos tal como la da get_electrodes pero con los labels asociados y binarizados.
+
+    labeled_example_path: carpeta donde se guardarian los datos del ejemplo utilizado
+    """
+
+    labeled_example_path = os.path.join(OUTPUT_DIR,'labeled_example')
+
+    os.makedirs(labeled_example_path,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
+    labeled_electrodes = deepcopy(unlabeled_electrodes)
+    labeled_electrodes = [[binarizar_BGR(e[0])[0],LABELS[i]] for i,e in enumerate(labeled_electrodes)] # binarizamos de una vez
+
+    if SAVE_IMAGES:
+        save_electrodes_images(labeled_electrodes,labeled_example_path,prefix='')
+    return labeled_electrodes,labeled_example_path
 if __name__ == '__main__':                                  # Funcionamiento del programa sobre una carpeta
     listOfFiles = [f for f in os.listdir(INPUT_DIR)]        # Lista de archivos a procesar
     if os.path.isdir(OUTPUT_DIR):                           # Revisar si el directorio de salida ya existe
@@ -499,16 +539,10 @@ if __name__ == '__main__':                                  # Funcionamiento del
 
     unlabeled_electrodes = get_electrodes(example_file,example_folder,write=False)
 
-    labeled_example_path = os.path.join(OUTPUT_DIR,'labeled_example')
-
-    os.makedirs(labeled_example_path,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
-    labeled_electrodes = deepcopy(unlabeled_electrodes)
-    labeled_electrodes = [[binarizar_BGR(e[0])[0],LABELS[i]] for i,e in enumerate(labeled_electrodes)] # binarizamos de una vez
-
-    if SAVE_IMAGES:
-        save_electrodes_images(labeled_electrodes,labeled_example_path,prefix='')
+    labeled_electrodes,labeled_example_path = label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
     with open(os.path.join(labeled_example_path,'example_file.txt'), 'w') as outfile:
         json.dump({'example_file':EXAMPLE}, outfile)
+
     for image in listOfFiles:
         electrodes = get_electrodes(image,INPUT_DIR,OUTPUT_DIR)             # Obtenemos lista de electrodos de la imagen
         output_folder = os.path.join(OUTPUT_DIR,'labeled',image)                      # Carpeta de salida donde guardaremos resultados 
