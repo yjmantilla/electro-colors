@@ -552,7 +552,8 @@ if __name__ == '__main__':                                  # Funcionamiento del
         bin_electrodes = [[binarizar_BGR(e[0])[0],e[1],e[2],e[3]] for e in bin_electrodes] # binarizamos para hacer correlaciones
         labels = [get_label(e[0],labeled_electrodes) for e in bin_electrodes]
         if SAVE_IMAGES:
-            save_electrodes_images(electrodes,output_folder)
+            electrodes_with_labels=[[e[0],l[0],e[2],e[3]] for e,l in zip(electrodes,labels)]
+            save_electrodes_images(electrodes_with_labels,output_folder,prefix='')
         no_images_and_labels = [x+list(y) for x,y in zip(no_images,labels)]
         df = pd.DataFrame(no_images_and_labels,columns=['electrodo','z','z_error','label','label_corr'])      # Creamos Tabla
         tablepath = os.path.join(output_folder,'electrodes')                # Directorio de la tabla
