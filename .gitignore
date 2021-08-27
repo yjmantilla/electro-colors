@@ -3,6 +3,7 @@
 .images_source/
 .rois/
 .output/
+electro_colors/static
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
