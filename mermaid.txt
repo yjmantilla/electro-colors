@@ -1,0 +1,25 @@
+graph TD
+    N1[/Imagen Entrante/] -->N2(BGR2GRAY)
+    N2 --> N3(Binarización Blanco vs NoBlanco)
+    N3 -->N4(Extracción de Contornos Externos)
+    N4 -->N5(Búsqueda Mayor Contorno)
+    N5 -->N6(Recorte de la Imagen)
+    N6 -->N7(Detección de Bordes - Canny)
+    N7 -->N8(Extracción de Contornos Externos)
+    N8-->N9(Cálculo de áreas de contornos)
+    N9-->N10(Discriminación de electrodos por área)
+    N10-->N11(Segmentación de electrodos)
+    N11-->N12(Manejo de electrodos pegados)
+    N12-->N13(Extraccion del color moda)
+    N13-->N14(Mapeo de color a impedania)
+    N14-->N15(Extraccion del label)
+    N15-->N16(Generación de tabla)
+
+
+graph LR
+    N1[/Usuario/] --> N0(obtener_ejemplo_etiquetado)
+    N2[(Imagen Ejemplo)] --> N0
+    N0 --> N3[("Electrodos separados con etiquetas para la  correlacion")]
+    N4[(Imagen a procesar)]-->N5(obtener_impedancias)
+    N3-->N5-->N6[Archivo tabular con impedancias]
+
