@@ -3,3 +3,5 @@ opencv-python
 pandas
 flask
 wtforms
+flask-wtf
+requests
