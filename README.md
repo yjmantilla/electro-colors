@@ -1,7 +1,5 @@
 # Readme
 
-Por el momento no hemos implementado Tesseract, por lo que no es necesario instalarlo.
-
 1. Instalar opencv para python (cv2)
 2. Instalar pandas
 3. Adecuar las variables INPUT_DIR(images) y OUTPUT_DIR (.rois), por defecto estan relativos a la carpeta del codigo de impedance.py
@@ -9,3 +7,6 @@ Por el momento no hemos implementado Tesseract, por lo que no es necesario insta
 5. Correr impedance.py
 6. La carpeta de salida deberia alojar para cada archivo una carpeta con la segmentacion y mapeos obtenidos.
 
+## Arquitectura
+
+[![](https://mermaid.ink/img/eyJjb2RlIjoiZ3JhcGggTFJcbiAgICBOMVsvVXN1YXJpby9dIC0tPiBOMChvYnRlbmVyX2VqZW1wbG9fZXRpcXVldGFkbylcbiAgICBOMlsoSW1hZ2VuIEVqZW1wbG8pXSAtLT4gTjBcbiAgICBOMCAtLT4gTjNbKFwiRWxlY3Ryb2RvcyBzZXBhcmFkb3MgY29uIGV0aXF1ZXRhcyBwYXJhIGxhICBjb3JyZWxhY2lvblwiKV1cbiAgICBONFsoSW1hZ2VuIGEgcHJvY2VzYXIpXS0tPk41KG9idGVuZXJfaW1wZWRhbmNpYXMpXG4gICAgTjMtLT5ONS0tPk42W0FyY2hpdm8gdGFidWxhciBjb24gaW1wZWRhbmNpYXNdXG5cbiIsIm1lcm1haWQiOnsidGhlbWUiOiJkZWZhdWx0In0sInVwZGF0ZUVkaXRvciI6ZmFsc2UsImF1dG9TeW5jIjp0cnVlLCJ1cGRhdGVEaWFncmFtIjpmYWxzZX0)](https://mermaid-js.github.io/mermaid-live-editor/edit##eyJjb2RlIjoiZ3JhcGggTFJcbiAgICBOMVsvVXN1YXJpby9dIC0tPiBOMChvYnRlbmVyX2VqZW1wbG9fZXRpcXVldGFkbylcbiAgICBOMlsoSW1hZ2VuIEVqZW1wbG8pXSAtLT4gTjBcbiAgICBOMCAtLT4gTjNbKFwiRWxlY3Ryb2RvcyBzZXBhcmFkb3MgY29uIGV0aXF1ZXRhcyBwYXJhIGxhICBjb3JyZWxhY2lvblwiKV1cbiAgICBONFsoSW1hZ2VuIGEgcHJvY2VzYXIpXS0tPk41KG9idGVuZXJfaW1wZWRhbmNpYXMpXG4gICAgTjMtLT5ONS0tPk42W0FyY2hpdm8gdGFidWxhciBjb24gaW1wZWRhbmNpYV1cblxuIiwibWVybWFpZCI6IntcbiAgXCJ0aGVtZVwiOiBcImRlZmF1bHRcIlxufSIsInVwZGF0ZUVkaXRvciI6ZmFsc2UsImF1dG9TeW5jIjp0cnVlLCJ1cGRhdGVEaWFncmFtIjpmYWxzZX0)
