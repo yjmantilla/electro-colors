@@ -19,6 +19,7 @@ import os                           # Para la manipulacion del sistema de archiv
 import shutil                       # Para la manipulacion del sistema de archivos
 import pandas as pd                 # Para crear la tabla final de electrodos
 from copy import deepcopy           # Para hacer copias reales de variables
+import json                         # Para guardar algunos metadatos
 
 #--------------------------------------------------------------------------------------------------
 #-------------Variables de entrada-----------------------------------------------------------------
@@ -26,9 +27,13 @@ from copy import deepcopy           # Para hacer copias reales de variables
 
 INPUT_DIR = 'images'                # Directorio donde se encuentran las imagenes originales
                                     # que se van a procesar.
-OUTPUT_DIR = '.rois'                # Directorio donde se va a guardar el resultado de procesamiento
+OUTPUT_DIR = '.output'                # Directorio donde se va a guardar el resultado de procesamiento
                                     # de cada una de las imagenes.
 
+SAVE_IMAGES = True                  # Si salvar o no las imagenes de los electrodos individuales
+
+EXAMPLE = 'images/6.bmp'  # La imagen de ejemplo debe tener TODOS los electrodos (ojo con VEO y HEO, ambos deben tener 2 colores contrastados para asegurar buen funcionamiento)
+LABELS = ['O1','O2','OZ','PO8','PO7','PO5','PO6','PO4','PO3','POZ','P8','P7','P6','P5','P3','P4','P2','PZ','P1','TP8','TP7','CP6','CP5','CP4','CP2','CPZ','CP1','CP3','C2','CZ','C1','C3','C5','T7','C6','C4','T8','FC2','FCZ','FC4','FC1','FC3','FC6','F1','F2','F4','F3','F5','FC5','F6','FZ','F8','F7','AF3','AF4','FP2','FP1','FPZ','VEO','HEO']
 #--------------------------------------------------------------------------------------------------
 #-------------Parametros constantes-----------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -54,7 +59,8 @@ Z_COLORS = [(255,0,255),            # Esta lista contiene n-tuplas de 3 posicion
 (255,0,0)  ,
 (192,0,0)  ,
 (128,0,0)  ,
-(63,0,0)   ]
+(63,0,0)   ,
+(0,0,0)    ]
 
 K = 1000                            # Sufijo K para abreviar kilo-ohms
 Z_VALUES = [50*K  ,                 # Lista de impedancias, en el mismo orden que los colores
@@ -71,7 +77,8 @@ Z_VALUES = [50*K  ,                 # Lista de impedancias, en el mismo orden qu
 14.6*K,
 11.4*K,
 8.2*K ,
-5*K   ]
+5*K   ,
+np.nan]
 
 def get_dist(a,b):
     """Calcular distancia euclidiana entre dos tuplas con numeros.
@@ -167,6 +174,24 @@ def plot_fun(x,title='untitled',func_sig='',plot=True,waitkey=True):
         if waitkey:                                         # Esperamos la entrada del usuario
             cv2.waitKey()                                   # de ser solicitado
 
+def binarizar_BGR(img,bin_low=250,bin_high=255):
+    """Binarizar imagen BGR de acuerdo a unos umbrales.
+
+    Parameters
+    ----------
+    img : imagen BGR a binarizar
+    bin_low : umbral inferior
+    bin_high : umbral superior
+    
+    Returns
+    -------
+    (imagen binarizada,imagen en gris)
+    """
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)                             # Convertimos a escala de grises 
+                                                                               # para facilitar la discriminacion del blanco entre lo demas
+    # Binarizacion, permite identificar lo "muy blanco" en escala de grises.
+    ret, thresh = cv2.threshold(imgray, bin_low, bin_high, cv2.THRESH_BINARY)   # La binarizacion en si.
+    return thresh,imgray
 def remover_exterior(img,plot=False,waitkey=False):
     """Elimina la ventana externa para quedar solo con 
     los electrodos,la escala y el fondo blanco.
@@ -288,8 +313,41 @@ def is_electrode(area,low=700,high=3000):
     else:                                   # De lo contrario...
         return False                        # NO.
 
-def get_electrodes(filename,input_dir,output_dir,plot=False,waitkey=False):
-    """Procesar una sola imagen con nombre `filename`, dentro de `input_dir` y guardarla los resultados en `output_dir`.
+def save_electrodes_images(electrodes,output_dir,prefix='electrode-'):
+    """Guardar imagenes de los electrodos en output_dir siguiendo el esquema siguiente:
+
+    output_dir/prefix-{label}_z-{impedancia}_error-{error}.png
+    o
+    output_dir/prefix-{label}.png
+    segun el caso
+
+    Parameters
+    ----------
+    electrodes : list[list]
+        Lista de listas. Cada lista en un electrodos dado por [arreglo_electrodo,label,impedancia,error de mapeo]
+        o [arreglo_electrodo,label]
+    output_dir : str
+        Path de la carpeta raiz donde se quieren guardar los electrodos.
+    prefix : str
+        Prefijo de los archivos
+
+    Returns
+    -------
+
+    None
+    """
+    if len(electrodes[0])==4:
+        for electrode,label,z,error in electrodes:
+            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}_z-{z}_error-{error}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
+    else:
+        assert len(electrodes[0])==2
+        for electrode,label in electrodes:
+            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
+
+def get_electrodes(filename,input_dir,plot=False,waitkey=False,write=False):
+    """Obtener electrodos de una imagen de nombre `filename`, dentro de `input_dir`.
+
+    El error de mapeo es la distancia euclidiana entre el color detectado para el electrodo y el color escogido en la escala Z_COLORS.
 
     Parameters
     ----------
@@ -297,9 +355,6 @@ def get_electrodes(filename,input_dir,output_dir,plot=False,waitkey=False):
         Nombre de la imagen dentro de la carpeta `input_dir`
     input_dir : str
         Path de la carpeta donde se encuentra la imagen de nombre `filename`
-    output_dir : str
-        Path de la carpeta raiz donde se quieren guardar los resultados con el siguiente formato:
-        output_dir/filename/roi-{}-{}_z-{}_dist-{}.png
     plot: bool
         Indica si graficar o no la imagen a medida que es procesada.
     waitkey: bool
@@ -307,17 +362,13 @@ def get_electrodes(filename,input_dir,output_dir,plot=False,waitkey=False):
         de graficar una imagen.
         Ignorado si plot es False.
 
-
     Returns
     -------
-    list[tuple]:
-        lista con tuplas de 4 posiciones:
-            (array del electrodo,label del electrodo,impedancia,error de mapeo a impedancia)
+    list[list]:
+        lista con listas de 3 posiciones:
+            [array del electrodo,numero del electrodo,impedancia,error de mapeo]
     """
     #TODO: Agregar monitoreo (graficas) e historial a la funcion tal como se hizo con remover_exterior
-    name,ext=os.path.splitext(filename)                                 # Obtenemos nombre y extension del archivo de la imagen
-    output_folder = os.path.join(output_dir,name+ext)                   # Carpeta de salida donde guardaremos resultados 
-    os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
     img_raw = cv2.imread(os.path.join(input_dir,filename))              # Lectura de la imagen entrante
 
     # Remocion de las ventanas exteriores
@@ -366,7 +417,7 @@ def get_electrodes(filename,input_dir,output_dir,plot=False,waitkey=False):
     # Ya con solo los contornos que corresponden a electrodos solo nos falta
     # solo nos falta recortar los electrodos, mapearlos a una impedancia
     # y guardarlos/retornarlos
-
+    e_count=0
     electrodes = []                                                     # Simplemente una lista para ir guardando los electrodos recortados
     for c,cnt in enumerate(cnts):                                       # Iteramos sobre los contornos (que ya deben correspoder solo a electrodos)
         x,y,w,h = cv2.boundingRect(cnt)                                 # Encontramos el rectangulo limitrofe del electrodo correspondiente
@@ -394,11 +445,11 @@ def get_electrodes(filename,input_dir,output_dir,plot=False,waitkey=False):
 
         else:                                                           # Este seria el caso de un solo electrodo
             ROIS = [ROI]                                                # Agregamos un solo electrodo a la lista
-
+        
         # Ya manejado tanto el caso normal como el outlier
         # Simplemente iteramos para mapear/guardar/retornar los electrodos
         for e,electrode in enumerate(ROIS):
-
+            e_count+= 1
             # Para mapear vemos el color mas comun del electrodo
             # Este sera el color que compararemos con la escala colores vs impedancia
             # para asi con este color "moda" mapear el electrodo a una impedancia
@@ -407,38 +458,69 @@ def get_electrodes(filename,input_dir,output_dir,plot=False,waitkey=False):
             color = colors[index]                                                                                               # A partir del indice obtenemos el color
             z,dist = z_mapping(color,Z_COLORS,Z_VALUES)                                                                         # Con la funcion z_mapping mapeamos el color a una impedancia
                                                                                                                                 # TODO: Obtener escala a partir de la imagen mediante una funcion
-            label = get_label(electrode)                                                                                        # Obtenemos el label, esta funcion aun no esta implementada
-            electrodes.append((electrode,label,z,dist))                                                                         # Agregamos el electrodo,impedancia,distancia actual a la lista de electrodos
+            electrodes.append([electrode,e_count,z,dist])                                                                         # Agregamos el electrodo,impedancia,distancia actual a la lista de electrodos
                                                                                                                                 # La distancia nos sirve como una metrica de error de mapeo, por eso la guardamos
-            cv2.imwrite(os.path.join(output_folder,"label-{}_roi-{}-{}_z-{}_dist-{}.png".format(c,e,label,z,dist)), electrode)  # Guardamos el electrodo en la carpeta de salida
     return electrodes
 
-def get_label(electrode):
+def get_label(electrode,reference_electrodes):
     """Retorna el label de un electrodo.
 
     Funcion aun no implementada pero si planificada.
 
     Parameters
     ----------
-    electrode : arreglo de la imagen recortada del electrodo
+    electrode :
+        arreglo de la imagen recortada y binarizada del electrodo
+    reference_electrodes:
+        lista de electrodos de referencia --> [[array electrodo binarizado,label]]
 
     Returns
     -------
-    None (por ahora)
+    label del electrodo con maxima correlacion,maxima correlacion
     """
-    return None
+    corrs = [0]*len(reference_electrodes)
+    e_size = electrode.shape
+    for i,ref in enumerate(reference_electrodes):
+        ref_e,ref_label = ref
+        ref_size = ref_e.shape
+        ref_size = ref_size[::-1]#reversar x,y, por la convencion invertida de opencv
+        e_resized = cv2.resize(electrode, dsize=ref_size, interpolation=cv2.INTER_CUBIC)
+        corrs[i] = np.abs(np.corrcoef(ref_e.flatten(),e_resized.flatten())[1,0])
+    idx =np.argmax(corrs)
+    labels = [e[1] for e in reference_electrodes]
+    return labels[idx],corrs[idx]
 if __name__ == '__main__':                                  # Funcionamiento del programa sobre una carpeta
     listOfFiles = [f for f in os.listdir(INPUT_DIR)]        # Lista de archivos a procesar
     if os.path.isdir(OUTPUT_DIR):                           # Revisar si el directorio de salida ya existe
         shutil.rmtree(OUTPUT_DIR)                           # Limpiarlo en ese caso
 
+    example_folder,example_file=os.path.split(EXAMPLE)
+    # Etiquetar un ejemplo
 
+    unlabeled_electrodes = get_electrodes(example_file,example_folder,write=False)
+
+    labeled_example_path = os.path.join(OUTPUT_DIR,'labeled_example')
+
+    os.makedirs(labeled_example_path,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
+    labeled_electrodes = deepcopy(unlabeled_electrodes)
+    labeled_electrodes = [[binarizar_BGR(e[0])[0],LABELS[i]] for i,e in enumerate(labeled_electrodes)] # binarizamos de una vez
+
+    if SAVE_IMAGES:
+        save_electrodes_images(labeled_electrodes,labeled_example_path,prefix='')
+    with open(os.path.join(labeled_example_path,'example_file.txt'), 'w') as outfile:
+        json.dump({'example_file':EXAMPLE}, outfile)
     for image in listOfFiles:
         electrodes = get_electrodes(image,INPUT_DIR,OUTPUT_DIR)             # Obtenemos lista de electrodos de la imagen
-        output_folder = os.path.join(OUTPUT_DIR,image)                      # Carpeta de salida donde guardaremos resultados 
+        output_folder = os.path.join(OUTPUT_DIR,'labeled',image)                      # Carpeta de salida donde guardaremos resultados 
         os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
         no_images = [x[1:] for x in electrodes]                             # Lista sin las imagenes de los electrodos (para guardar la tabla)
-        df = pd.DataFrame(no_images,columns=['label','z','error'])          # Creamos Tabla
+        bin_electrodes = deepcopy(electrodes)
+        bin_electrodes = [[binarizar_BGR(e[0])[0],e[1],e[2],e[3]] for e in bin_electrodes] # binarizamos para hacer correlaciones
+        labels = [get_label(e[0],labeled_electrodes) for e in bin_electrodes]
+        if SAVE_IMAGES:
+            save_electrodes_images(electrodes,output_folder)
+        no_images_and_labels = [x+list(y) for x,y in zip(no_images,labels)]
+        df = pd.DataFrame(no_images_and_labels,columns=['electrodo','z','z_error','label','label_corr'])      # Creamos Tabla
         tablepath = os.path.join(output_folder,'electrodes')                # Directorio de la tabla
         df.to_html(tablepath+'.html')                                       # Guardamos tabla html de electrodos
         df.to_csv(tablepath+'.csv')                                         # Guardamos tabla csv de electrodos
