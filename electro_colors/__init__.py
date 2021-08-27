@@ -20,20 +20,6 @@ import shutil                       # Para la manipulacion del sistema de archiv
 import pandas as pd                 # Para crear la tabla final de electrodos
 from copy import deepcopy           # Para hacer copias reales de variables
 import json                         # Para guardar algunos metadatos
-
-#--------------------------------------------------------------------------------------------------
-#-------------Variables de entrada-----------------------------------------------------------------
-#--------------------------------------------------------------------------------------------------
-
-INPUT_DIR = 'images'                # Directorio donde se encuentran las imagenes originales
-                                    # que se van a procesar.
-OUTPUT_DIR = '.output'                # Directorio donde se va a guardar el resultado de procesamiento
-                                    # de cada una de las imagenes.
-
-SAVE_IMAGES = True                  # Si salvar o no las imagenes de los electrodos individuales
-
-EXAMPLE = 'images/6.bmp'  # La imagen de ejemplo debe tener TODOS los electrodos (ojo con VEO y HEO, ambos deben tener 2 colores contrastados para asegurar buen funcionamiento)
-LABELS = ['O1','O2','OZ','PO8','PO7','PO5','PO6','PO4','PO3','POZ','P8','P7','P6','P5','P3','P4','P2','PZ','P1','TP8','TP7','CP6','CP5','CP4','CP2','CPZ','CP1','CP3','C2','CZ','C1','C3','C5','T7','C6','C4','T8','FC2','FCZ','FC4','FC1','FC3','FC6','F1','F2','F4','F3','F5','FC5','F6','FZ','F8','F7','AF3','AF4','FP2','FP1','FPZ','VEO','HEO']
 #--------------------------------------------------------------------------------------------------
 #-------------Parametros constantes-----------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
@@ -529,11 +515,70 @@ def label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
     if SAVE_IMAGES:
         save_electrodes_images(labeled_electrodes,labeled_example_path,prefix='')
     return labeled_electrodes,labeled_example_path
-if __name__ == '__main__':                                  # Funcionamiento del programa sobre una carpeta
-    listOfFiles = [f for f in os.listdir(INPUT_DIR)]        # Lista de archivos a procesar
-    if os.path.isdir(OUTPUT_DIR):                           # Revisar si el directorio de salida ya existe
-        shutil.rmtree(OUTPUT_DIR)                           # Limpiarlo en ese caso
 
+def process_image(image,labeled_electrodes,INPUT_DIR,OUTPUT_DIR,SAVE_IMAGES):
+    """Procesa una imagen the nombre `image` en la carpeta `INPUT_DIR` dados un electrodos de referencia para la correlacion
+    en `labeled_electrodes`. La salida se guarda en `OUTPUT_DIR`.
+
+    Parameters
+    ----------
+    image : str
+    Nombre del archivo de la imagen en INPUT_DIR
+
+    labeled_electrodes:list[list]
+    La salida de la funcion label_example_electrodes
+
+    OUTPUT_DIR: str
+    Carpeta de entrada donde esta image
+
+    OUTPUT_DIR: str
+    Carpeta de salida
+
+    SAVE_IMAGES: bool
+    Para decidir si guardar las imagenes de los electrodos con los labels asociados.
+
+    Returns
+    -------
+    None
+    """
+    electrodes = get_electrodes(image,INPUT_DIR,OUTPUT_DIR)             # Obtenemos lista de electrodos de la imagen
+    output_folder = os.path.join(OUTPUT_DIR,'labeled',image)                      # Carpeta de salida donde guardaremos resultados 
+    os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
+    no_images = [x[1:] for x in electrodes]                             # Lista sin las imagenes de los electrodos (para guardar la tabla)
+    bin_electrodes = deepcopy(electrodes)
+    bin_electrodes = [[binarizar_BGR(e[0])[0],e[1],e[2],e[3]] for e in bin_electrodes] # binarizamos para hacer correlaciones
+    labels = [get_label(e[0],labeled_electrodes) for e in bin_electrodes]
+    if SAVE_IMAGES:
+        electrodes_with_labels=[[e[0],l[0],e[2],e[3]] for e,l in zip(electrodes,labels)]
+        save_electrodes_images(electrodes_with_labels,output_folder,prefix='')
+    no_images_and_labels = [x+list(y) for x,y in zip(no_images,labels)]
+    df = pd.DataFrame(no_images_and_labels,columns=['electrodo','z','z_error','label','label_corr'])      # Creamos Tabla
+    tablepath = os.path.join(output_folder,'electrodes')                # Directorio de la tabla
+    df.to_html(tablepath+'.html')                                       # Guardamos tabla html de electrodos
+    df.to_csv(tablepath+'.csv')                                         # Guardamos tabla csv de electrodos
+
+def process_example(EXAMPLE,LABELS,OUTPUT_DIR,SAVE_IMAGES):
+    """A partir de una imagen de ejemplo con ruta `EXAMPLE` y sus labels en `LABELS` retorna la lista de electrodos etiquetados del ejemplo.
+
+    Parameters
+    ----------
+    EXAMPLE : str
+    Ruta del archivo de la imagen de ejemplo
+
+    LABELS:list[list]
+    Lista con las etiquetas en el mismo orden que el retorno de get_electrodes(EXAMPLE)
+
+    OUTPUT_DIR: str
+    Carpeta de salida
+
+    SAVE_IMAGES: bool
+    Para decidir si guardar las imagenes de los electrodos con los labels asociados.
+
+    Returns
+    -------
+    None
+
+    """
     example_folder,example_file=os.path.split(EXAMPLE)
     # Etiquetar un ejemplo
 
@@ -542,22 +587,4 @@ if __name__ == '__main__':                                  # Funcionamiento del
     labeled_electrodes,labeled_example_path = label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
     with open(os.path.join(labeled_example_path,'example_file.txt'), 'w') as outfile:
         json.dump({'example_file':EXAMPLE}, outfile)
-
-    for image in listOfFiles:
-        electrodes = get_electrodes(image,INPUT_DIR,OUTPUT_DIR)             # Obtenemos lista de electrodos de la imagen
-        output_folder = os.path.join(OUTPUT_DIR,'labeled',image)                      # Carpeta de salida donde guardaremos resultados 
-        os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
-        no_images = [x[1:] for x in electrodes]                             # Lista sin las imagenes de los electrodos (para guardar la tabla)
-        bin_electrodes = deepcopy(electrodes)
-        bin_electrodes = [[binarizar_BGR(e[0])[0],e[1],e[2],e[3]] for e in bin_electrodes] # binarizamos para hacer correlaciones
-        labels = [get_label(e[0],labeled_electrodes) for e in bin_electrodes]
-        if SAVE_IMAGES:
-            electrodes_with_labels=[[e[0],l[0],e[2],e[3]] for e,l in zip(electrodes,labels)]
-            save_electrodes_images(electrodes_with_labels,output_folder,prefix='')
-        no_images_and_labels = [x+list(y) for x,y in zip(no_images,labels)]
-        df = pd.DataFrame(no_images_and_labels,columns=['electrodo','z','z_error','label','label_corr'])      # Creamos Tabla
-        tablepath = os.path.join(output_folder,'electrodes')                # Directorio de la tabla
-        df.to_html(tablepath+'.html')                                       # Guardamos tabla html de electrodos
-        df.to_csv(tablepath+'.csv')                                         # Guardamos tabla csv de electrodos
-
-    print('END')
+    return labeled_electrodes
