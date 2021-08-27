@@ -1,6 +1,6 @@
 import os
 import shutil
-from electro_colors import process_image,process_example
+from electro_colors.impedance import process_image,process_example
 #--------------------------------------------------------------------------------------------------
 #-------------Variables de entrada-----------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
