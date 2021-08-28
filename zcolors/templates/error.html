@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>ERROR!</h1>
+
+<h2 id="traceback">Send the following traceback to the <a href="https://github.com/yjmantilla/electro-colors/issues" target="_blank" rel="noopener noreferrer">github issues</a></h2>
+<!-- https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/ -->
+<dl>
+    <p style="white-space: pre-line;margin-left:5%;">
+        Would be helpful to also include the context where the problem arised. For example the steps you did to arrive to the error, the kind of data you are using, etc.
+    </p>
+</dl>
+
+<dl>
+    <p style="white-space: pre-line;margin-left:5%;">
+    {{ error }}
+    </p>
+</dl>
+
+{% endblock %}

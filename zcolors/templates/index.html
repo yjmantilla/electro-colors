@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% set active_page = "index" %}
+
+{% block content %}
+<div class="ml-5">
+<p>zcolors is a python package to do the following conversion.</p>
+<p><img src={{ url_for('static', filename='input_output.jpg')}} alt="image" /></p>
+
+<ul>
+<li><dl>
+zcolors can be used through:
+<dd><ol style="list-style-type: lower-alpha">
+<li>its python API</li>
+<li>its web-app.</li>
+</ol>
+</dd>
+</dl></li>
+</ul>
+</div>
+{% endblock %}
+

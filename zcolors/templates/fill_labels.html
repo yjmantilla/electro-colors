@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% set active_page = "index" %}
+
+{% block content %}
+        <div class="ml-5">
+        <h1>Fill labels</h1>
+        <form method="post" action="/select" enctype="multipart/form-data">
+        <table>
+                <tr>
+                  <th>Color</th>
+                  <th>Impedance</th>
+                </tr>
+            
+                {% for e in electrodes %}
+                <tr>
+                    <td><img src={{ e }}></img>
+                    </td>
+                    {% if labels %}
+                    <td><textarea name="e-"+{{ loop.index0 }} id="" cols="30" rows="1"> {{labels[loop.index0]}} </textarea></td>
+                    {% else %}
+                    <td><textarea name="e-"+{{ loop.index0 }} id="" cols="30" rows="1"> {{loop.index}} </textarea></td>
+                    {% endif %}
+                </tr>
+            
+                {% endfor %}
+            </table>
+            <p>
+                <input type="submit" value="Send labels">
+            </p>
+        </form>
+
+        </div>
+{% endblock %}

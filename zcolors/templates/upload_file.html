@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="ml-5">
 <h1>Upload a {{ what_to_upload }}.</h1>
 <form method=post enctype=multipart/form-data>
   <input type=file name=file>
   <input type=submit value=Upload>
 </form>
+</div>
 {% endblock %}
 

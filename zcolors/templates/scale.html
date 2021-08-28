@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="ml-5">
+        <h1>{{title}}</h1>
+        </div>
+          <div style="float: left;width: 50%;">
+            {% include 'scale_table.html' %}
+          </div>
+          <div class="px-5" style="float: right;width: 50%;">
+            {% if example != '' %}
+
+            <img src={{ url_for('static', filename=example)}} style="max-width: 100%; height: auto; object-fit: cover;"s></img>
+
+            {% endif %}
+          
+          </div>
+
+{% endblock %}
