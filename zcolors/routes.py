@@ -83,7 +83,7 @@ def fill_labels():
     #https://stackoverflow.com/questions/40928205/python-opencv-image-to-byte-string-for-json-transfer/40930153
     example = session['example'][1]
     folder = session['example'][0]
-    example_electrodes = impedance.get_electrodes(example,folder)
+    example_electrodes = impedance.get_electrodes(os.path.join(folder,example))
     #frame = cv2.imdecode(example_electrodes[0][0], cv2.IMREAD_COLOR)
     #https://stackoverflow.com/questions/6269765/what-does-the-b-character-do-in-front-of-a-string-literal
     #https://stackoverflow.com/questions/606191/convert-bytes-to-a-string

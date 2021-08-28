@@ -330,17 +330,15 @@ def save_electrodes_images(electrodes,output_dir,prefix='electrode-'):
         for electrode,label in electrodes:
             cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
 
-def get_electrodes(filename,input_dir,plot=False,waitkey=False,write=False):
+def get_electrodes(filepath,plot=False,waitkey=False,write=False):
     """Obtener electrodos de una imagen de nombre `filename`, dentro de `input_dir`.
 
     El error de mapeo es la distancia euclidiana entre el color detectado para el electrodo y el color escogido en la escala Z_COLORS.
 
     Parameters
     ----------
-    filename : str
-        Nombre de la imagen dentro de la carpeta `input_dir`
-    input_dir : str
-        Path de la carpeta donde se encuentra la imagen de nombre `filename`
+    filepath : str
+        Ruta completa de la imagen.
     plot: bool
         Indica si graficar o no la imagen a medida que es procesada.
     waitkey: bool
@@ -355,7 +353,7 @@ def get_electrodes(filename,input_dir,plot=False,waitkey=False,write=False):
             [array del electrodo,numero del electrodo,impedancia,error de mapeo]
     """
     #TODO: Agregar monitoreo (graficas) e historial a la funcion tal como se hizo con remover_exterior
-    img_raw = cv2.imread(os.path.join(input_dir,filename))              # Lectura de la imagen entrante
+    img_raw = cv2.imread(filepath)              # Lectura de la imagen entrante
 
     # Remocion de las ventanas exteriores
     imagenes_remocion,historial_remocion = remover_exterior(img_raw)    # Removemos el "exterior" de la imagen
@@ -516,20 +514,17 @@ def label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
         save_electrodes_images(labeled_electrodes,labeled_example_path,prefix='')
     return labeled_electrodes,labeled_example_path
 
-def process_image(image,labeled_electrodes,INPUT_DIR,OUTPUT_DIR,SAVE_IMAGES):
-    """Procesa una imagen the nombre `image` en la carpeta `INPUT_DIR` dados un electrodos de referencia para la correlacion
+def process_image(image,labeled_electrodes,OUTPUT_DIR,SAVE_IMAGES):
+    """Procesa una imagen con ruta `image` dados un electrodos de referencia para la correlacion
     en `labeled_electrodes`. La salida se guarda en `OUTPUT_DIR`.
 
     Parameters
     ----------
     image : str
-    Nombre del archivo de la imagen en INPUT_DIR
+    Ruta completa del archivo de la imagen.
 
     labeled_electrodes:list[list]
     La salida de la funcion label_example_electrodes
-
-    OUTPUT_DIR: str
-    Carpeta de entrada donde esta image
 
     OUTPUT_DIR: str
     Carpeta de salida
@@ -541,8 +536,9 @@ def process_image(image,labeled_electrodes,INPUT_DIR,OUTPUT_DIR,SAVE_IMAGES):
     -------
     None
     """
-    electrodes = get_electrodes(image,INPUT_DIR,OUTPUT_DIR)             # Obtenemos lista de electrodos de la imagen
-    output_folder = os.path.join(OUTPUT_DIR,'labeled',image)                      # Carpeta de salida donde guardaremos resultados 
+    electrodes = get_electrodes(image)             # Obtenemos lista de electrodos de la imagen
+    filename = os.path.split(image)[-1]
+    output_folder = os.path.join(OUTPUT_DIR,filename)                      # Carpeta de salida donde guardaremos resultados 
     os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
     no_images = [x[1:] for x in electrodes]                             # Lista sin las imagenes de los electrodos (para guardar la tabla)
     bin_electrodes = deepcopy(electrodes)
@@ -579,10 +575,8 @@ def process_example(EXAMPLE,LABELS,OUTPUT_DIR,SAVE_IMAGES):
     None
 
     """
-    example_folder,example_file=os.path.split(EXAMPLE)
     # Etiquetar un ejemplo
-
-    unlabeled_electrodes = get_electrodes(example_file,example_folder,write=False)
+    unlabeled_electrodes = get_electrodes(EXAMPLE,write=False)
 
     labeled_electrodes,labeled_example_path = label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
     with open(os.path.join(labeled_example_path,'example_file.txt'), 'w') as outfile:
