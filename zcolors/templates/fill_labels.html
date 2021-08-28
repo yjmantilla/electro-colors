@@ -4,7 +4,7 @@
 {% block content %}
         <div class="ml-5">
         <h1>Fill labels</h1>
-        <form method="post" action="/select" enctype="multipart/form-data">
+        <form method="get" action="/upload_folder" enctype="multipart/form-data">
         <table>
                 <tr>
                   <th>Color</th>
@@ -16,9 +16,11 @@
                     <td><img src={{ e }}></img>
                     </td>
                     {% if labels %}
-                    <td><textarea name="e-"+{{ loop.index0 }} id="" cols="30" rows="1"> {{labels[loop.index0]}} </textarea></td>
+                    <!-- <td><textarea name="labels" id="" cols="30" rows="1"> {{labels[loop.index0]}} </textarea></td> -->
+                    <td><input type="text" name="labels" value={{labels[loop.index0]}}></td>
                     {% else %}
-                    <td><textarea name="e-"+{{ loop.index0 }} id="" cols="30" rows="1"> {{loop.index}} </textarea></td>
+                    <td><input type="text" name="labels" value={{loop.index}}></td>
+                    <!-- <td><textarea name="labels" id="" cols="30" rows="1"> {{loop.index}} </textarea></td> -->
                     {% endif %}
                 </tr>
             

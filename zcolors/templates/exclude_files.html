@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+   UNSELECT the files you want to exclude from the processing:
+   
+    <form action="/exclude" method="POST">
+        <ul>
+            {% for file in filenames %}
+             <label><input type="checkbox" value= {{ file }} name="records" checked> {{ file }}</label><br/>
+            {% endfor %}
+        </ul>
+        <input type="submit" value="Send">
+    </form>
+{% endblock %}

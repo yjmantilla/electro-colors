@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block nav_exclude %}active{% endblock %}
+
+{% block content %}
+    The following files will be processed:
+   
+    <form action="/init_process" method="get">
+        <ul>
+            {% for file in filenames %}
+             <li>{{ file }}</li>
+            {% endfor %}
+        </ul>
+        <input type="submit" value="Send">
+    </form>
+
+{% endblock %}

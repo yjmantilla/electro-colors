@@ -6,7 +6,9 @@
 zcolors/static/_uploads
 zcolors/static/_temp
 zcolors/static/_convert
-
+zcolors/_uploads
+zcolors/_temp
+zcolors/_convert
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

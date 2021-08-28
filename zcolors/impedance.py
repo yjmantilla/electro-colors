@@ -324,13 +324,13 @@ def save_electrodes_images(electrodes,output_dir,prefix='electrode-'):
     """
     if len(electrodes[0])==4:
         for electrode,label,z,error in electrodes:
-            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}_z-{z}_error-{error}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
+            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}_z-{z}_dist-{error}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
     else:
         assert len(electrodes[0])==2
         for electrode,label in electrodes:
             cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
 
-def get_electrodes(filepath,plot=False,waitkey=False,write=False):
+def get_electrodes(filepath,Z_COLORS=Z_COLORS,Z_VALUES=Z_VALUES,plot=False,waitkey=False,write=False):
     """Obtener electrodos de una imagen de nombre `filename`, dentro de `input_dir`.
 
     El error de mapeo es la distancia euclidiana entre el color detectado para el electrodo y el color escogido en la escala Z_COLORS.
@@ -514,7 +514,7 @@ def label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
         save_electrodes_images(labeled_electrodes,labeled_example_path,prefix='')
     return labeled_electrodes,labeled_example_path
 
-def process_image(image,labeled_electrodes,OUTPUT_DIR,SAVE_IMAGES):
+def process_image(image,labeled_electrodes,OUTPUT_DIR,SAVE_IMAGES,Z_COLORS=Z_COLORS,Z_VALUES=Z_VALUES):
     """Procesa una imagen con ruta `image` dados un electrodos de referencia para la correlacion
     en `labeled_electrodes`. La salida se guarda en `OUTPUT_DIR`.
 
@@ -548,7 +548,7 @@ def process_image(image,labeled_electrodes,OUTPUT_DIR,SAVE_IMAGES):
         electrodes_with_labels=[[e[0],l[0],e[2],e[3]] for e,l in zip(electrodes,labels)]
         save_electrodes_images(electrodes_with_labels,output_folder,prefix='')
     no_images_and_labels = [x+list(y) for x,y in zip(no_images,labels)]
-    df = pd.DataFrame(no_images_and_labels,columns=['electrodo','z','z_error','label','label_corr'])      # Creamos Tabla
+    df = pd.DataFrame(no_images_and_labels,columns=['electrodo','z','color_dist','label','label_corr'])      # Creamos Tabla
     tablepath = os.path.join(output_folder,'electrodes')                # Directorio de la tabla
     df.to_html(tablepath+'.html')                                       # Guardamos tabla html de electrodos
     df.to_csv(tablepath+'.csv')                                         # Guardamos tabla csv de electrodos

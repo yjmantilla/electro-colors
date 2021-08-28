@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block nav_rules %}active{% endblock %}
+
+{% block content %}
+<h1>Ready to start processing!</h1>
+<form method="POST">
+    <input name="convert_them" type="submit" value="Press here to process the images!">
+</form>
+{% endblock %}

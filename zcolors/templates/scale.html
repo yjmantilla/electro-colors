@@ -8,10 +8,15 @@
             {% include 'scale_table.html' %}
           </div>
           <div class="px-5" style="float: right;width: 50%;">
+            <!-- https://stackoverflow.com/questions/26971491/how-do-i-link-to-images-not-in-static-folder-in-flask -->
             {% if example != '' %}
-
-            <img src={{ url_for('static', filename=example)}} style="max-width: 100%; height: auto; object-fit: cover;"s></img>
-
+            {% if mode=='default' %}
+            <img src={{ url_for('static', filename=example) }} style="max-width: 100%; height: auto; object-fit: cover;"></img>
+            {% elif mode=='upload' %}
+            <img src={{ url_for('download_file', filename=example) }} style="max-width: 100%; height: auto; object-fit: cover;"></img>
+            {% elif mode=='raw' %}
+            <img src={{ example}} style="max-width: 100%; height: auto; object-fit: cover;"></img>
+            {% endif %}
             {% endif %}
           
           </div>

@@ -1,3 +1,4 @@
+"""Open browser in incognito mode to avoid cache problems."""
 from zcolors import app
 
 if __name__ == '__main__':
