@@ -21,9 +21,6 @@ numpy==1.20.3
 olefile==0.46
 opencv-contrib-python==4.5.1.48
 pandas==1.3.1
-git+https://github.com/IntelPython/mkl_fft.git#egg=mkl_fft
-mkl-random==1.2.2
-mkl-service==2.4.0
 Pillow==8.3.1
 pip==21.0.1
 pybv==0.5.0
