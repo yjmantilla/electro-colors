@@ -15,7 +15,7 @@ Jinja2==2.11.2
 kiwisolver==1.3.1
 MarkupSafe==1.1.1
 matplotlib==3.4.2
-mkl-fft==1.3.0
+git+https://github.com/IntelPython/mkl_fft.git#egg=mkl_fft
 mkl-random==1.2.2
 mkl-service==2.4.0
 mne==0.23.0
