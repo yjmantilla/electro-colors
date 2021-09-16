@@ -15,7 +15,7 @@ OUTPUT_DIR = '.output'                # Directorio donde se va a guardar el resu
 
 SAVE_IMAGES = True                  # Si salvar o no las imagenes de los electrodos individuales
 
-EXAMPLE = 'images/6.bmp'  # La imagen de ejemplo debe tener TODOS los electrodos (ojo con VEO y HEO, ambos deben tener 2 colores contrastados para asegurar buen funcionamiento)
+EXAMPLE = 'images/6.png'  # La imagen de ejemplo debe tener TODOS los electrodos (ojo con VEO y HEO, ambos deben tener 2 colores contrastados para asegurar buen funcionamiento)
 LABELS = ['O1','O2','OZ','PO8','PO7','PO5','PO6','PO4','PO3','POZ','P8','P7','P6','P5','P3','P4','P2','PZ','P1','TP8','TP7','CP6','CP5','CP4','CP2','CPZ','CP1','CP3','C2','CZ','C1','C3','C5','T7','C6','C4','T8','FC2','FCZ','FC4','FC1','FC3','FC6','F1','F2','F4','F3','F5','FC5','F6','FZ','F8','F7','AF3','AF4','FP2','FP1','FPZ','VEO','HEO']
 
 if __name__ == '__main__':                                  # Funcionamiento del programa sobre una carpeta
