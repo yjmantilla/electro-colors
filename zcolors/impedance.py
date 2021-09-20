@@ -11,7 +11,7 @@
 #--------------------------------------------------------------------------------------------------
 #----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
 #--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
-#--------------------------Agosto de 2021----------------------------------------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
 import cv2                          # Para el procesamiento de Imagenes
 import numpy as np                  # Para manejo de matricesS
@@ -173,8 +173,8 @@ def binarizar_BGR(img,bin_low=250,bin_high=255):
     -------
     (imagen binarizada,imagen en gris)
     """
-    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)                             # Convertimos a escala de grises 
-                                                                               # para facilitar la discriminacion del blanco entre lo demas
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)                              # Convertimos a escala de grises 
+                                                                                # para facilitar la discriminacion del blanco entre lo demas
     # Binarizacion, permite identificar lo "muy blanco" en escala de grises.
     ret, thresh = cv2.threshold(imgray, bin_low, bin_high, cv2.THRESH_BINARY)   # La binarizacion en si.
     return thresh,imgray
@@ -221,6 +221,7 @@ def remover_exterior(img,plot=False,waitkey=False):
     all_titles.append(title)                                        # Añadir metadatos
                                                                     # TODO: Este seccion de codigo (title a append) es repetitivo
                                                                     # Se puede colocar en una sola funcion
+
     # Objetivo: Extraer contornos de aquello que es blanco,
     # es decir, el fondo del interior de la imagen.
 
@@ -322,13 +323,14 @@ def save_electrodes_images(electrodes,output_dir,prefix='electrode-'):
 
     None
     """
+    # Segun la cantidad de columnas de la variable electrodes, realizamos diferentes logicas
     if len(electrodes[0])==4:
-        for electrode,label,z,error in electrodes:
-            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}_z-{z}_dist-{error}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
+        for electrode,label,z,error in electrodes:                                                          # Tenemos el arreglo, la etiqueta, la impedancia,y el error del color 
+            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}_z-{z}_dist-{error}.png"), electrode)      # Guardamos el electrodo en la carpeta de salida
     else:
         assert len(electrodes[0])==2
-        for electrode,label in electrodes:
-            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}.png"), electrode)  # Guardamos el electrodo en la carpeta de salida
+        for electrode,label in electrodes:                                                                  # Solo tenemos el arreglo y la etiqueta
+            cv2.imwrite(os.path.join(output_dir,f"{prefix}{label}.png"), electrode)                         # Guardamos el electrodo en la carpeta de salida
 
 def get_electrodes(filepath,Z_COLORS=Z_COLORS,Z_VALUES=Z_VALUES,plot=False,waitkey=False,write=False):
     """Obtener electrodos de una imagen de nombre `filename`, dentro de `input_dir`.
@@ -349,11 +351,11 @@ def get_electrodes(filepath,Z_COLORS=Z_COLORS,Z_VALUES=Z_VALUES,plot=False,waitk
     Returns
     -------
     list[list]:
-        lista con listas de 3 posiciones:
+        lista con listas de 4 posiciones:
             [array del electrodo,numero del electrodo,impedancia,error de mapeo]
     """
     #TODO: Agregar monitoreo (graficas) e historial a la funcion tal como se hizo con remover_exterior
-    img_raw = cv2.imread(filepath)              # Lectura de la imagen entrante
+    img_raw = cv2.imread(filepath)                                      # Lectura de la imagen entrante
 
     # Remocion de las ventanas exteriores
     imagenes_remocion,historial_remocion = remover_exterior(img_raw)    # Removemos el "exterior" de la imagen
@@ -442,7 +444,7 @@ def get_electrodes(filepath,Z_COLORS=Z_COLORS,Z_VALUES=Z_VALUES,plot=False,waitk
             color = colors[index]                                                                                               # A partir del indice obtenemos el color
             z,dist = z_mapping(color,Z_COLORS,Z_VALUES)                                                                         # Con la funcion z_mapping mapeamos el color a una impedancia
                                                                                                                                 # TODO: Obtener escala a partir de la imagen mediante una funcion
-            electrodes.append([electrode,e_count,z,dist])                                                                         # Agregamos el electrodo,impedancia,distancia actual a la lista de electrodos
+            electrodes.append([electrode,e_count,z,dist])                                                                       # Agregamos el electrodo,impedancia,distancia actual a la lista de electrodos
                                                                                                                                 # La distancia nos sirve como una metrica de error de mapeo, por eso la guardamos
     return electrodes
 
@@ -462,20 +464,19 @@ def get_label(electrode,reference_electrodes):
     -------
     label del electrodo con maxima correlacion,maxima correlacion
     """
-    corrs = [0]*len(reference_electrodes)
-    e_size = electrode.shape
-    for i,ref in enumerate(reference_electrodes):
-        ref_e,ref_label = ref
-        ref_size = ref_e.shape
-        ref_size = ref_size[::-1]#reversar x,y, por la convencion invertida de opencv
-        e_resized = cv2.resize(electrode, dsize=ref_size, interpolation=cv2.INTER_CUBIC)
-        corrs[i] = np.abs(np.corrcoef(ref_e.flatten(),e_resized.flatten())[1,0])
-    idx =np.argmax(corrs)
-    labels = [e[1] for e in reference_electrodes]
-    return labels[idx],corrs[idx]
+    corrs = [0]*len(reference_electrodes)               # Reserva de la lista con tantas posiciones como electrodos
+    for i,ref in enumerate(reference_electrodes):       # Recorrido de los electrodos ejemplo uno a uno
+        ref_e,ref_label = ref                           # separamos la tupla para obtener el arreglo del electrodo ejemplo actual
+        ref_size = ref_e.shape                          # Obtenemos el tamaño del electrodo ejemplo
+        ref_size = ref_size[::-1]                       # Reversar x,y, por la convencion invertida de opencv
+        e_resized = cv2.resize(electrode, dsize=ref_size, interpolation=cv2.INTER_CUBIC)    # Escalamos el electrodo para que sea del mismo tamaño que el del ejemplo
+        corrs[i] = np.abs(np.corrcoef(ref_e.flatten(),e_resized.flatten())[1,0])            # Calculamos la correlacion y aplicamos valor absoluto (no nos interesan correlaciones negativas)
+    idx =np.argmax(corrs)                                                                   # Identificamos la posicion de la correlacion maxima
+    labels = [e[1] for e in reference_electrodes]                                           # Obtenemos la etiqueta asociada a la correlacion maxima
+    return labels[idx],corrs[idx]                                                           # Retornamos la correlacion y etiqueta escogida
 
 def label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES):
-    """Asociar labels a una lista de electrodos sin estos que conforman el ejemplo para hacer correlacion.
+    """Asociar labels a una lista de electrodos para que asi formen el ejemplo para hacer correlacion.
 
     Parameters
     ----------
@@ -504,18 +505,18 @@ def label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
     labeled_example_path: carpeta donde se guardarian los datos del ejemplo utilizado
     """
 
-    labeled_example_path = os.path.join(OUTPUT_DIR,'labeled_example')
+    labeled_example_path = os.path.join(OUTPUT_DIR,'labeled_example')                                  # Carpeta de salida para el archivo de ejemplo
 
-    os.makedirs(labeled_example_path,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
-    labeled_electrodes = deepcopy(unlabeled_electrodes)
-    labeled_electrodes = [[binarizar_BGR(e[0])[0],LABELS[i]] for i,e in enumerate(labeled_electrodes)] # binarizamos de una vez
+    os.makedirs(labeled_example_path,exist_ok=True)                                                    # Creamos la carpeta de salida en caso de que no exista
+    labeled_electrodes = deepcopy(unlabeled_electrodes)                                                # Copia profunda para no mutar la variable original
+    labeled_electrodes = [[binarizar_BGR(e[0])[0],LABELS[i]] for i,e in enumerate(labeled_electrodes)] # Binarizamos de una vez
 
-    if SAVE_IMAGES:
+    if SAVE_IMAGES:                                                                                    # Guardamos los electrodos en caso de que se pida
         save_electrodes_images(labeled_electrodes,labeled_example_path,prefix='')
-    return labeled_electrodes,labeled_example_path
+    return labeled_electrodes,labeled_example_path                                                     # Retornamos la lista de electrodos etiquetados y la ruta de donde se guardo el ejemplo.
 
 def process_image(image,labeled_electrodes,OUTPUT_DIR,SAVE_IMAGES,Z_COLORS=Z_COLORS,Z_VALUES=Z_VALUES):
-    """Procesa una imagen con ruta `image` dados un electrodos de referencia para la correlacion
+    """Procesa una imagen con ruta `image` dados unos electrodos de referencia para la correlacion
     en `labeled_electrodes`. La salida se guarda en `OUTPUT_DIR`.
 
     Parameters
@@ -536,22 +537,22 @@ def process_image(image,labeled_electrodes,OUTPUT_DIR,SAVE_IMAGES,Z_COLORS=Z_COL
     -------
     None
     """
-    electrodes = get_electrodes(image)             # Obtenemos lista de electrodos de la imagen
-    filename = os.path.split(image)[-1]
-    output_folder = os.path.join(OUTPUT_DIR,filename)                      # Carpeta de salida donde guardaremos resultados 
+    electrodes = get_electrodes(image)                                  # Segmentamos para obtener lista de electrodos de la imagen
+    filename = os.path.split(image)[-1]                                 # Obtenemos el nombre del archivo que estamos procesando
+    output_folder = os.path.join(OUTPUT_DIR,filename)                   # Generamos ruta de la carpeta de salida donde guardaremos resultados 
     os.makedirs(output_folder,exist_ok=True)                            # Creamos la carpeta de salida en caso de que no exista
     no_images = [x[1:] for x in electrodes]                             # Lista sin las imagenes de los electrodos (para guardar la tabla)
-    bin_electrodes = deepcopy(electrodes)
-    bin_electrodes = [[binarizar_BGR(e[0])[0],e[1],e[2],e[3]] for e in bin_electrodes] # binarizamos para hacer correlaciones
-    labels = [get_label(e[0],labeled_electrodes) for e in bin_electrodes]
-    if SAVE_IMAGES:
+    bin_electrodes = deepcopy(electrodes)                               # Copia profunda para no mutar la variable original
+    bin_electrodes = [[binarizar_BGR(e[0])[0],e[1],e[2],e[3]] for e in bin_electrodes] # Binarizamos para hacer correlaciones
+    labels = [get_label(e[0],labeled_electrodes) for e in bin_electrodes]              # Obtenemos los labels de cada electrodo segun la correlacion
+    if SAVE_IMAGES:                                                                    # Guardamos las imagenes resultantes de ser requerido
         electrodes_with_labels=[[e[0],l[0],e[2],e[3]] for e,l in zip(electrodes,labels)]
         save_electrodes_images(electrodes_with_labels,output_folder,prefix='')
-    no_images_and_labels = [x+list(y) for x,y in zip(no_images,labels)]
+    no_images_and_labels = [x+list(y) for x,y in zip(no_images,labels)]                                      # Lista con etiquetas pero sin imagenes para crear la tabla
     df = pd.DataFrame(no_images_and_labels,columns=['electrodo','z','color_dist','label','label_corr'])      # Creamos Tabla
-    tablepath = os.path.join(output_folder,'electrodes')                # Directorio de la tabla
-    df.to_html(tablepath+'.html')                                       # Guardamos tabla html de electrodos
-    df.to_csv(tablepath+'.csv')                                         # Guardamos tabla csv de electrodos
+    tablepath = os.path.join(output_folder,'electrodes')                                                     # Directorio de la tabla
+    df.to_html(tablepath+'.html')                                                                            # Guardamos tabla html de electrodos
+    df.to_csv(tablepath+'.csv')                                                                              # Guardamos tabla csv de electrodos
 
 def process_example(EXAMPLE,LABELS,OUTPUT_DIR,SAVE_IMAGES):
     """A partir de una imagen de ejemplo con ruta `EXAMPLE` y sus labels en `LABELS` retorna la lista de electrodos etiquetados del ejemplo.
@@ -575,10 +576,13 @@ def process_example(EXAMPLE,LABELS,OUTPUT_DIR,SAVE_IMAGES):
     None
 
     """
-    # Etiquetar un ejemplo
+    # Segmentamos la imagen de ejemplo para obtene los electrodos individuales
     unlabeled_electrodes = get_electrodes(EXAMPLE,write=False)
 
+    # Asociamos los electrodos con los labels proveidos a la funcion
     labeled_electrodes,labeled_example_path = label_example_electrodes(unlabeled_electrodes,LABELS,OUTPUT_DIR,SAVE_IMAGES)
+
+    # Guardamos informacion del ejemplo utilizado de ser requerido
     with open(os.path.join(labeled_example_path,'example_file.txt'), 'w') as outfile:
         json.dump({'example_file':EXAMPLE}, outfile)
-    return labeled_electrodes
+    return labeled_electrodes                       # Retornamos la lista de electrodos ejemplo pero con sus etiquetas asociadas
