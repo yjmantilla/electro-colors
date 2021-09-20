@@ -1,17 +1,42 @@
+<!-- 
+#--------------------------------------------------------------------------------------------------
+#--------------------Extraccion de impedancias en escala de color----------------------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Alexis Rafael del Carmen Ávila Ortiz--------CC 1083555169----------------------------
+#-------------alexis.avila@udea.edu.co--------------------Wpp +57 305 2230574----------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Yorguin José Mantilla Ramos-----------------CC 1127617499----------------------------
+#-------------yorguinj.mantilla@udea.edu.co---------------Wpp +57 311 5154452----------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
+#--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
+#-------------------------------------------------------------------------------------------------- 
+-->
+
+<!-- template para mostrar lista de archivos a processar  -->
+
+<!-- heredar de la base -->
 {% extends "base.html" %}
 
 {% block nav_exclude %}active{% endblock %}
 
+<!-- lo que colocaremos en el bloque de contenido del template base -->
 {% block content %}
     The following files will be processed:
    
+    <!-- siguiente paso sera la pagina para iniciar el procesamiento con el metodo get -->
     <form action="/init_process" method="get">
         <ul>
+            <!-- for que simplemente muestra los archivos a procesar -->
             {% for file in filenames %}
              <li>{{ file }}</li>
             {% endfor %}
         </ul>
-        <input type="submit" value="Send">
+        <!-- boton para proseguir -->
+            <input type="submit" value="Send">
     </form>
 
 {% endblock %}

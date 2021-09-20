@@ -1,15 +1,39 @@
+<!-- 
+#--------------------------------------------------------------------------------------------------
+#--------------------Extraccion de impedancias en escala de color----------------------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Alexis Rafael del Carmen Ávila Ortiz--------CC 1083555169----------------------------
+#-------------alexis.avila@udea.edu.co--------------------Wpp +57 305 2230574----------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Yorguin José Mantilla Ramos-----------------CC 1127617499----------------------------
+#-------------yorguinj.mantilla@udea.edu.co---------------Wpp +57 311 5154452----------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
+#--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
+#-------------------------------------------------------------------------------------------------- 
+-->
+
+<!-- heredar de la base -->
 {% extends "base.html" %}
 
+<!-- lo que colocaremos en el bloque de contenido del template base -->
 {% block content %}
 
    UNSELECT the files you want to exclude from the processing:
    
+   <!-- envio del formulario usando metodo post -->
     <form action="/exclude" method="POST">
         <ul>
+            <!-- crear checkbox por cada archivo usando un for -->
             {% for file in filenames %}
+            <!-- br es line break, no necesita cerrar el tag, https://www.tutorialspoint.com/What-is-the-correct-way-of-using-br-br-or-br-in-HTML -->
              <label><input type="checkbox" value= {{ file }} name="records" checked> {{ file }}</label><br/>
             {% endfor %}
         </ul>
+        <!-- boton -->
         <input type="submit" value="Send">
     </form>
 {% endblock %}

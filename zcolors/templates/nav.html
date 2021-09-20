@@ -1,3 +1,22 @@
+<!-- 
+#--------------------------------------------------------------------------------------------------
+#--------------------Extraccion de impedancias en escala de color----------------------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Alexis Rafael del Carmen Ávila Ortiz--------CC 1083555169----------------------------
+#-------------alexis.avila@udea.edu.co--------------------Wpp +57 305 2230574----------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Yorguin José Mantilla Ramos-----------------CC 1127617499----------------------------
+#-------------yorguinj.mantilla@udea.edu.co---------------Wpp +57 311 5154452----------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
+#--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
+#-------------------------------------------------------------------------------------------------- 
+-->
+
+<!-- template para la barra de navegacion -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <a class="navbar-brand" href="/">Z COLORS</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
@@ -5,10 +24,10 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
+        <!-- 3 opciones: inicio, usar ejemplo del usuario, usar ejemplo por defecto -->
         <a class="nav-item nav-link {% block nav_scale %}{% endblock %}" href="{{ url_for('scale_page') }}">Scale</a>
         <a class="nav-item nav-link {% block nav_upload_file %}{% endblock %}" href="{{ url_for('upload_file',what_to_upload='example') }}">Upload Example</a>
         <a class="nav-item nav-link {% block nav_default_example %}{% endblock %}" href="{{ url_for('default_example') }}">Use Default Example</a>
-
       </div>
     </div>
   </nav>

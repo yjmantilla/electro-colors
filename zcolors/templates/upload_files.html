@@ -1,15 +1,41 @@
+<!-- 
+#--------------------------------------------------------------------------------------------------
+#--------------------Extraccion de impedancias en escala de color----------------------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Alexis Rafael del Carmen Ávila Ortiz--------CC 1083555169----------------------------
+#-------------alexis.avila@udea.edu.co--------------------Wpp +57 305 2230574----------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Yorguin José Mantilla Ramos-----------------CC 1127617499----------------------------
+#-------------yorguinj.mantilla@udea.edu.co---------------Wpp +57 311 5154452----------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
+#--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
+#-------------------------------------------------------------------------------------------------- 
+-->
+
+<!-- heredar de la base -->
+
 {% extends "base.html" %}
 
+<!-- template para la subida de varios archivos -->
+
+<!-- uso de un estilo css particular y local -->
 {% block head %}
 	{{ super() }}
 	<link rel="stylesheet" href="{{ url_for('static', filename='upload_files.css') }}">
 {% endblock %}
 
-{% block nav_upload %}active{% endblock %}
+<!-- lo que colocaremos en el bloque de contenido del template base -->
 
 {% block content %}
+	<!-- indicaciones para el usuario -->
 	<h2>Select folder to upload</h2>
 	<p>This folder should have the images you want to process.</p>
+
+	<!-- codigo para mostrar mensajes de alerta de flask si el usuario no selecciona algo valido -->
 	<p>
 		{% with messages = get_flashed_messages() %}
 		{% if messages %}
@@ -21,18 +47,22 @@
 		{% endif %}
 		{% endwith %}
 	</p>
+
+	<!-- form que soporta la subida multiple de archivos -->
 	<form method="post" action="" enctype="multipart/form-data">
 		<dl>
 			<p>
 				<!-- <input type="file" id="file" class= "inputfile" name="files[]" multiple="true" autocomplete="off" required> -->
+				<!-- subida recursiva de una carpeta
+				ver https://stackoverflow.com/questions/38546788/upload-files-in-folder-subdirectories-using-webkitdirectory-and-java-servlet -->
 				<input type="file" id="file" name="files[]" webkitdirectory directory multiple/>
-
 				<label  for = "file"> 
-					
-					Select the files to convert
+					Select the folder with files to convert
 				</label >
 			</p>
 		</dl>
+
+		<!-- boton para subida -->
 		<p>
 			<input type="submit" value="Submit">
 		</p>

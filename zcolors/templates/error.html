@@ -1,21 +1,43 @@
+<!-- 
+#--------------------------------------------------------------------------------------------------
+#--------------------Extraccion de impedancias en escala de color----------------------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Alexis Rafael del Carmen Ávila Ortiz--------CC 1083555169----------------------------
+#-------------alexis.avila@udea.edu.co--------------------Wpp +57 305 2230574----------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Yorguin José Mantilla Ramos-----------------CC 1127617499----------------------------
+#-------------yorguinj.mantilla@udea.edu.co---------------Wpp +57 311 5154452----------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
+#--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
+#-------------------------------------------------------------------------------------------------- 
+-->
+
+<!-- Este template html es para mostrarlo en caso de que se produzca algun error -->
+
+<!-- heredar de la base -->
 {% extends "base.html" %}
 
-
+<!-- lo que colocaremos en el bloque de contenido del template base -->
 {% block content %}
-<h1>ERROR!</h1>
+    <h1>ERROR!</h1>
 
-<h2 id="traceback">Send the following traceback to the <a href="https://github.com/yjmantilla/electro-colors/issues" target="_blank" rel="noopener noreferrer">github issues</a></h2>
-<!-- https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/ -->
-<dl>
-    <p style="white-space: pre-line;margin-left:5%;">
-        Would be helpful to also include the context where the problem arised. For example the steps you did to arrive to the error, the kind of data you are using, etc.
-    </p>
-</dl>
+    <!-- proveer el traceback al usuario para que se de al desarrollador -->
+    <h2 id="traceback">Send the following traceback to the <a href="https://github.com/yjmantilla/electro-colors/issues" target="_blank" rel="noopener noreferrer">github issues</a></h2>
+    <!-- https://www.freecodecamp.org/news/how-to-use-html-to-open-link-in-new-tab/ -->
+    <dl>
+        <p style="white-space: pre-line;margin-left:5%;">
+            Would be helpful to also include the context where the problem arised. For example the steps you did to arrive to the error, the kind of data you are using, etc.
+        </p>
+    </dl>
 
-<dl>
-    <p style="white-space: pre-line;margin-left:5%;">
-    {{ error }}
-    </p>
-</dl>
-
+    <!-- dar el error al usuario para mas detalle -->
+    <dl>
+        <p style="white-space: pre-line;margin-left:5%;">
+        {{ error }}
+        </p>
+    </dl>
 {% endblock %}

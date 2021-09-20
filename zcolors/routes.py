@@ -68,7 +68,7 @@ def upload_file(what_to_upload='file'):
             data=b'data:image/jpeg;base64,' + jpg_as_text
             data=data.decode("utf-8")
 
-            return render_template('scale_button.html',edit_mode=True,mode='raw',title='Verify the scale of the software and of the example image is the same',z_values=SCALE['impedance'],colors=SCALE['colors'],example=data)
+            return render_template('scale.html',edit_mode=True,mode='raw',title='Verify the scale of the software and of the example image is the same',z_values=SCALE['impedance'],colors=SCALE['colors'],example=data)
     return render_template('upload_file.html',what_to_upload=what_to_upload)
 @app.route('/')
 @app.route('/index')
@@ -90,7 +90,7 @@ def default_example():
     session['example'] = (os.path.join(PATH,'static'),'default_example.bmp')
     with open(os.path.join(session['example'][0],'default_example.txt'), 'r') as f:
         session['labels'] = f.readlines()
-    return render_template('scale_button.html',edit_mode=True,mode='default',title='This is the default example, verify the scale is correct.',z_values=SCALE['impedance'],colors=SCALE['colors'],example='default_example.bmp')
+    return render_template('scale.html',edit_mode=True,mode='default',title='This is the default example, verify the scale is correct.',z_values=SCALE['impedance'],colors=SCALE['colors'],example='default_example.bmp')
 
 @app.route('/fill_labels')
 def fill_labels():

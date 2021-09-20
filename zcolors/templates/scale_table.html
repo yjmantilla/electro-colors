@@ -1,21 +1,53 @@
+<!-- 
+#--------------------------------------------------------------------------------------------------
+#--------------------Extraccion de impedancias en escala de color----------------------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Alexis Rafael del Carmen Ávila Ortiz--------CC 1083555169----------------------------
+#-------------alexis.avila@udea.edu.co--------------------Wpp +57 305 2230574----------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Yorguin José Mantilla Ramos-----------------CC 1127617499----------------------------
+#-------------yorguinj.mantilla@udea.edu.co---------------Wpp +57 311 5154452----------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
+#--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
+#-------------------------------------------------------------------------------------------------- 
+-->
+
+<!-- template para mostrar escala -->
+<!-- redirije al proximo paso que es mostrar la tabla de etiquetas del ejemplo -->
+
+<!-- clase para margen a la izquierda -->
 <div class="ml-5">
+
+  <!-- modo edicion (permite la edicion de la escala por el usuario) -->
   {% if edit_mode %}
- 
-  <form method="get" action="/fill_labels" enctype="multipart/form-data">
+
+  <!-- si es modo edicion, las impedancias de la escala son un formulario
+  que al enviarse redirije a la asignacion de etiquetas del ejemplo -->
+  <form method="get" action="/fill_labels">
     {% endif %}
- 
+
+    <!-- en cualquie caso se hace una tabla color-impedancia -->
   <table>
     <tr>
       <th>Color</th>
       <th>Impedance</th>
     </tr>
 
+    <!-- recorrer colores de la escala con un for -->
     {% for c in colors %}
     <tr>
+        <!-- mostrar cuadro con color -->
         <td>            <div style="background-color: {{ c }} ; padding: 10px; border: 1px solid black;"></div>
         </td>
+        <!-- si es modo edicion, ofrecer input para poder edita el valor de impedancia -->
         {% if edit_mode %}
         <td><input type="text" name="impedances" value={{z_values[loop.index0]}}></td>
+
+        <!-- si no es modo edicion simplemente mostrar el valor de impedancia -->
         {% else %}
         <td>{{ z_values[loop.index0] }}</td>
         {% endif %}
@@ -23,6 +55,8 @@
 
     {% endfor %}
 </table>
+
+<!-- si es modo edicion mostrar el boton para el siguiente paso -->
 {% if edit_mode %}
 <p>
   <input type="submit" value="Next">

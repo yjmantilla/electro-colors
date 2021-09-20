@@ -1,32 +1,63 @@
-{% extends "base.html" %}
-{% set active_page = "index" %}
+<!-- 
+#--------------------------------------------------------------------------------------------------
+#--------------------Extraccion de impedancias en escala de color----------------------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Alexis Rafael del Carmen Ávila Ortiz--------CC 1083555169----------------------------
+#-------------alexis.avila@udea.edu.co--------------------Wpp +57 305 2230574----------------------
+#--------------------------------------------------------------------------------------------------
+#-------------Yorguin José Mantilla Ramos-----------------CC 1127617499----------------------------
+#-------------yorguinj.mantilla@udea.edu.co---------------Wpp +57 311 5154452----------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------
+#----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
+#--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
+#--------------------------Septiembre de 2021------------------------------------------------------
+#-------------------------------------------------------------------------------------------------- 
+-->
 
+
+<!-- heredar de la base -->
+{% extends "base.html" %}
+
+<!-- lo que colocaremos en el bloque de contenido del template base -->
 {% block content %}
+        <!-- clase para mantener margen izquierdo -->
         <div class="ml-5">
+        <!-- https://getbootstrap.com/docs/4.0/utilities/spacing/ -->
         <h1>Fill labels</h1>
-        <form method="get" action="/upload_folder" enctype="multipart/form-data">
+
+        <!-- siguiente paso seria la subida de archivos con el metodo get -->
+        <form method="get" action="/upload_folder">
+        
+        <!-- tabla imagen - etiqueta para asignacion de etiquetas por parte del usuario -->
         <table>
                 <tr>
                   <th>Electrode</th>
                   <th>Label</th>
                 </tr>
-            
+                <!-- recorremos electrodos con un for -->
                 {% for e in electrodes %}
                 <tr>
+                    <!-- imagen segmentada de cada electrodo -->
                     <td><img src={{ e }}></img>
                     </td>
+
+                    <!-- si hay etiquetas disponibles, usar esas etiquetas -->
                     {% if labels %}
-                    <!-- <td><textarea name="labels" id="" cols="30" rows="1"> {{labels[loop.index0]}} </textarea></td> -->
+                    <!-- entrada de texto editable por el usuario y con valor inicial correspondiente a la etiqueta dada -->
                     <td><input type="text" name="labels" value={{labels[loop.index0]}}></td>
+                    <!-- de lo contrariro simplemente usar un contador para las etiquetas -->
                     {% else %}
+                    <!-- entrada de texto editable por el usuario y con valor inicial correspondiente al contador -->
                     <td><input type="text" name="labels" value={{loop.index}}></td>
-                    <!-- <td><textarea name="labels" id="" cols="30" rows="1"> {{loop.index}} </textarea></td> -->
                     {% endif %}
                 </tr>
             
                 {% endfor %}
             </table>
             <p>
+                <!-- boton para avanzar -->
                 <input type="submit" value="Send labels">
             </p>
         </form>
