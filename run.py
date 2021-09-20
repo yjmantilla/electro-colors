@@ -8,7 +8,7 @@ import json
 #-------------Variables de entrada-----------------------------------------------------------------
 #--------------------------------------------------------------------------------------------------
 
-ROOT_DIR = r"Y:\code\electro-colors\.images_source"#'.images_source'                # Directorio donde se encuentran las imagenes originales
+ROOT_DIR = r"Y:\code\electro-colors\.anon"#'.images_source'                # Directorio donde se encuentran las imagenes originales
                                     # que se van a procesar.
 OUTPUT_DIR = '.output'                # Directorio donde se va a guardar el resultado de procesamiento
                                     # de cada una de las imagenes.

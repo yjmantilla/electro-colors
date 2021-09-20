@@ -3,6 +3,7 @@
 .images_source/
 .rois/
 .output/
+.anon/
 zcolors/static/_uploads
 zcolors/static/_temp
 zcolors/static/_convert
