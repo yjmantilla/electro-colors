@@ -12,14 +12,13 @@
 #----------------------Estudiantes Facultad de Ingenieria  ----------------------------------------
 #--------Curso Básico de Procesamiento de Imágenes y Visión Artificial-----------------------------
 #--------------------------Septiembre de 2021------------------------------------------------------
-#-------------------------------------------------------------------------------------------------- 
+#--------------------------------------------------------------------------------------------------
 
 
-import os # para manejo de paths
-import shutil # para remocion de archivos
+import os                                                       # Para manejo de paths
+import shutil                                                   # Para remocion de archivos
 
-# obtener path del archivo actual
-path = os.path.dirname(os.path.realpath(__file__))
+path = os.path.dirname(os.path.realpath(__file__))              # Obtener path del archivo actual
 
 # Definicion de los directorios subida converion y temporal
 UPLOAD_FOLDER = os.path.join(path,'_uploads')
@@ -41,10 +40,10 @@ for x in [UPLOAD_FOLDER,CONV_FOLDER,TEMP_FOLDER]:
 
 # Configuracion de la webapp mediante una clase Config que hereda de la clase objeto
 class Config(object):
-    UPLOAD_FOLDER = os.path.join(path,'_uploads') # carpeta subida
-    CONV_FOLDER = os.path.join(path,'_convert') # carpeta de conversion
-    TEMP_FOLDER = os.path.join(path,'_temp') # carpeta temporal
-    EXAMPLE = os.path.join(path) # ruta del ejemplo
-    CACHE_TYPE = "null" # evita que la pagina no recargue bien los recursos ya que utiliza lo que tiene en cache.
-    # ver https://stackoverflow.com/questions/55519452/flask-send-file-is-sending-old-file-instead-of-newest/55519673
-    SEND_FILE_MAX_AGE_DEFAULT=0 # linea usada tambien para eliminar el cache y evitar que la pagina no aplique cambios recientes.
+    UPLOAD_FOLDER = os.path.join(path,'_uploads')                       # Carpeta subida
+    CONV_FOLDER = os.path.join(path,'_convert')                         # Carpeta de conversion (Archivos Resultantes)
+    TEMP_FOLDER = os.path.join(path,'_temp')                            # Carpeta temporal
+    EXAMPLE = os.path.join(path)                                        # Ruta del ejemplo
+    CACHE_TYPE = "null"                                                 # Evita que la pagina no recargue bien los recursos ya que utiliza lo que tiene en cache.
+                                                                        # Ver https://stackoverflow.com/questions/55519452/flask-send-file-is-sending-old-file-instead-of-newest/55519673
+    SEND_FILE_MAX_AGE_DEFAULT=0                                         # Linea usada tambien para eliminar el cache y evitar que la pagina no aplique cambios recientes.
